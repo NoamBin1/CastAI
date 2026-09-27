@@ -17,23 +17,15 @@
   <!-- resolves, motion-continuous, into the website hero.        -->
   <!-- No audio. No video element. No skip control.               -->
   <div id="cinematic" aria-hidden="true">
-    <div class="scene">
-      <div class="rig">
-        <div class="camera">
-          <div class="tilt">
-            <img class="watch watch--far" src="assets/verion-watch.webp" alt="" />
-            <img class="watch watch--near" src="assets/verion-watch.webp" alt="" />
-          </div>
-        </div>
-      </div>
-      <div class="keylight"></div>          <!-- warm studio key light -->
-      <div class="glint"></div>             <!-- specular flashes on crystal/gold -->
-      <div class="sweep"></div>             <!-- long reflection across the crystal -->
-      <div class="cinegrain"></div>         <!-- fine film grain -->
-      <div class="filmvig"></div>           <!-- lens vignette -->
-      <div class="cut"></div>               <!-- black-flash beats between shots -->
-      <div class="dialfill"></div>          <!-- dial -> hero (the good transition) -->
-    </div>
+    <!-- Real cinematic clip (AI image-to-video from the watch photo). -->
+    <!-- Muted + autoplay + playsinline: a background film, not a player. -->
+    <video class="introvid" muted autoplay playsinline preload="auto"
+           poster="assets/verion-watch.webp">
+      <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3JYVuFccljLSf2X17PmIw0zHRLY/hf_20260927_184218_d8860d7e-3d05-45df-a93f-b1d8d868a0c0.mp4" type="video/mp4" />
+    </video>
+    <div class="cinegrain"></div>   <!-- fine film grain over the clip -->
+    <div class="filmvig"></div>     <!-- lens vignette -->
+    <div class="dialfill"></div>    <!-- grows into the hero background -->
   </div>
 
   <!-- site-wide cinematic overlays -->

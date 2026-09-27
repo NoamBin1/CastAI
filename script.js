@@ -7,8 +7,7 @@
   "use strict";
 
   var body = document.body;
-  var OPENING_MS = 13000;   // full timeline (matches CSS)
-  var HANDOFF_MS = 11900;   // reveal hero just as the dial fills the frame
+  var HARD_FALLBACK_MS = 7000;   // never stay locked behind the overlay
   var timers = [];
 
   var yr = document.getElementById("yr");
@@ -25,36 +24,53 @@
     body.classList.add("opening-done", "opening-removed");
   }
 
-  function runOpening(){
+  var cine = document.getElementById("cinematic");
+  var video = cine ? cine.querySelector(".introvid") : null;
+  var ended = false;
+
+  // Hand the film off to the hero: grow the dark dial texture, then reveal.
+  function endIntro(){
+    if (ended) return;
+    ended = true;
     clearTimers();
-    body.classList.remove("opening-done", "opening-removed");
-    body.classList.add("cinematic-active");
-
-    // restart the CSS timeline by re-inserting a fresh overlay clone
-    var cine = document.getElementById("cinematic");
-    var clone = cine.cloneNode(true);
-    cine.parentNode.replaceChild(clone, cine);
-
-    // dial fills the frame -> reveal hero underneath (same dark texture,
-    // hero keeps drifting -> the camera never appears to stop)
-    timers.push(setTimeout(function(){ body.classList.add("opening-done"); }, HANDOFF_MS));
-
-    // release scroll once the overlay has fully cross-faded
+    if (cine) cine.classList.add("ending");
+    // reveal hero underneath as the dark texture takes over (seamless)
+    timers.push(setTimeout(function(){ body.classList.add("opening-done"); }, 750));
+    // release scroll once the overlay has fully faded
     timers.push(setTimeout(function(){
       body.classList.remove("cinematic-active");
       body.classList.add("opening-removed");
-    }, OPENING_MS + 1400));
+    }, 2200));
+  }
+
+  function runOpening(){
+    clearTimers();
+    ended = false;
+    body.classList.remove("opening-done", "opening-removed");
+    body.classList.add("cinematic-active");
+    if (cine) cine.classList.remove("ending");
+
+    if (!video){ endIntro(); return; }
+
+    try { video.currentTime = 0; } catch(e){}
+    var p = video.play();
+    if (p && p.catch) p.catch(function(){ /* autoplay blocked -> timers cover it */ });
+
+    // start the hand-off just before the clip ends (overlap the last motion)
+    video.onended = endIntro;
+    video.ontimeupdate = function(){
+      if (video.duration && video.currentTime >= video.duration - 0.9) endIntro();
+    };
+    video.onerror = function(){ timers.push(setTimeout(endIntro, 300)); };
+
+    // hard fallback so the site always appears
+    timers.push(setTimeout(endIntro, HARD_FALLBACK_MS));
   }
 
   if (reduce){
     finishInstant();
   } else {
-    var started = false;
-    var start = function(){ if (started) return; started = true; runOpening(); };
-    var img = new Image();
-    img.onload = img.onerror = start;
-    img.src = "assets/verion-watch.webp";
-    setTimeout(start, 600); // safety: never stay locked behind the overlay
+    runOpening();
   }
 
   // Replay control (restart the opening — handy for recording takes)
