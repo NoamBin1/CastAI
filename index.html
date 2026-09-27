@@ -18,16 +18,22 @@
   <!-- No audio. No video element. No skip control.               -->
   <div id="cinematic" aria-hidden="true">
     <div class="scene">
-      <div class="camera">
-        <div class="tilt">
-          <img class="watch watch--far" src="assets/verion-watch.webp" alt="" />
-          <img class="watch watch--near" src="assets/verion-watch.webp" alt="" />
+      <div class="rig">
+        <div class="camera">
+          <div class="tilt">
+            <img class="watch watch--far" src="assets/verion-watch.webp" alt="" />
+            <img class="watch watch--near" src="assets/verion-watch.webp" alt="" />
+            <div class="shade"></div>       <!-- darkness that light lifts off the metal -->
+          </div>
         </div>
       </div>
+      <div class="keylight"></div>          <!-- warm studio key raking across -->
+      <div class="glint"></div>             <!-- specular flash on crystal/gold -->
+      <div class="sweep"></div>             <!-- long reflection across the crystal -->
+      <div class="cinegrain"></div>         <!-- fine film grain -->
+      <div class="filmvig"></div>           <!-- lens vignette -->
+      <div class="dialfill"></div>          <!-- dial -> hero (the good transition) -->
     </div>
-    <div class="sweep"></div>
-    <div class="iris"></div>
-    <div class="dialfill"></div>
   </div>
 
   <!-- site-wide cinematic overlays -->
