@@ -129,19 +129,19 @@ body.opening-removed #cinematic{display:none}
    ========================================================= */
 @keyframes camera-move{
   /* SHOT 1 — the crown, emerging from black, slow creep */
-  0%   {transform:scale(3.7) translate(-15%,-9%)}
-  13%  {transform:scale(3.9) translate(-16.5%,-11%)}
+  0%   {transform:scale(2.7) translate(-13%,-8%)}
+  13%  {transform:scale(2.85) translate(-14.5%,-9.5%)}
   /* SHOT 2 — tourbillon, hard punch-in with drift */
-  13.8%{transform:scale(3.5) translate(-4%,-17%)}
-  25%  {transform:scale(4.35) translate(-6%,-15%)}
+  13.8%{transform:scale(2.75) translate(-3%,-13%)}
+  25%  {transform:scale(3.05) translate(-4.5%,-11.5%)}
   /* SHOT 3 — hands & centre, fast lateral whip */
-  26%  {transform:scale(3.15) translate(9%,5%)}
-  36.7%{transform:scale(3.3) translate(-8%,4%)}
+  26%  {transform:scale(2.45) translate(7%,4%)}
+  36.7%{transform:scale(2.6) translate(-6%,3%)}
   /* SHOT 4 — engraved subdial spiral, Dutch push */
-  37.7%{transform:scale(3.85) translate(15%,3%)}
-  47.5%{transform:scale(4.15) translate(13%,-1%)}
+  37.7%{transform:scale(2.85) translate(11%,2%)}
+  47.5%{transform:scale(3.0) translate(10%,-1%)}
   /* SHOT 5 — the reveal: pull back to the whole watch, floating */
-  48.5%{transform:scale(2.2) translate(3%,-1%)}
+  48.5%{transform:scale(2.0) translate(2%,-1%)}
   53.8%{transform:scale(1.06) translate(0,0)}
   69.2%{transform:scale(1.12) translate(-.5%,.3%)}
   /* push into the dial -> the (kept) transition */
