@@ -7,38 +7,37 @@
 <meta name="description" content="VÉRION — haute horlogerie. Time, refined." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="cinematic-active">
 
   <!-- ================= CINEMATIC OPENING ================= -->
   <!-- A scripted 13s camera move over the still watch image that -->
-  <!-- resolves seamlessly into the website hero. No audio. No skip. -->
+  <!-- resolves, motion-continuous, into the website hero.        -->
+  <!-- No audio. No video element. No skip control.               -->
   <div id="cinematic" aria-hidden="true">
     <div class="scene">
       <div class="camera">
         <div class="tilt">
-          <!-- far, softly-blurred copy for depth-of-field parallax -->
           <img class="watch watch--far" src="assets/verion-watch.webp" alt="" />
-          <!-- sharp hero copy -->
           <img class="watch watch--near" src="assets/verion-watch.webp" alt="" />
         </div>
       </div>
     </div>
-
-    <!-- moving specular reflection across crystal & metal -->
     <div class="sweep"></div>
-    <!-- iris / studio vignette that opens out of darkness -->
     <div class="iris"></div>
-    <!-- the dark dial texture that grows to become the hero background -->
     <div class="dialfill"></div>
   </div>
 
+  <!-- site-wide cinematic overlays -->
+  <div class="vfx-vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
   <!-- ===================== WEBSITE ===================== -->
-  <header class="nav">
+  <header class="nav" id="nav">
     <div class="nav__inner">
-      <span class="brand">VÉRION</span>
+      <a href="#top" class="brand">VÉRION</a>
       <nav class="links">
         <a href="#collection">Collection</a>
         <a href="#maison">Maison</a>
@@ -50,54 +49,71 @@
   <main>
     <section class="hero" id="top">
       <div class="hero__bg"></div>
+      <div class="hero__glow"></div>
       <div class="hero__content">
-        <p class="eyebrow">HAUTE HORLOGERIE</p>
-        <h1 class="wordmark">VÉRION</h1>
-        <p class="tagline">TIME, REFINED.</p>
-        <a class="cta" href="#collection">
-          <span>EXPLORE THE COLLECTION</span>
-        </a>
+        <p class="eyebrow" data-line>HAUTE HORLOGERIE</p>
+        <h1 class="wordmark" data-word>VÉRION</h1>
+        <p class="tagline" data-line>TIME, REFINED.</p>
+        <a class="cta" href="#collection" data-line><span>EXPLORE THE COLLECTION</span></a>
       </div>
+      <a class="scrollcue" href="#collection" aria-label="Scroll">
+        <span class="scrollcue__line"></span>
+      </a>
       <button class="replay" title="Replay the opening" aria-label="Replay the opening">↻</button>
     </section>
 
     <section class="collection" id="collection">
-      <p class="section-eyebrow">THE COLLECTION</p>
-      <h2 class="section-title">Movements of Consequence</h2>
+      <p class="section-eyebrow" data-reveal>THE COLLECTION</p>
+      <h2 class="section-title" data-reveal>Movements of Consequence</h2>
       <div class="grid">
-        <article class="card">
-          <div class="card__img" style="--fx:50%;--fy:46%"></div>
-          <h3>Tourbillon Or Rose</h3>
-          <p>Hand-finished skeleton calibre in 18k rose gold.</p>
-          <span class="price">On request</span>
+        <article class="card" data-reveal>
+          <div class="card__frame"><div class="card__img" style="--cx:50%;--cy:46%;--cz:300%"></div></div>
+          <div class="card__body">
+            <span class="card__idx">I</span>
+            <h3>Tourbillon Or Rose</h3>
+            <p>A hand-finished skeleton calibre suspended in 18k rose gold.</p>
+            <span class="price">On request</span>
+          </div>
         </article>
-        <article class="card">
-          <div class="card__img" style="--fx:44%;--fy:40%"></div>
-          <h3>Squelette Noir</h3>
-          <p>Open-worked dial over a black studio finish.</p>
-          <span class="price">On request</span>
+        <article class="card" data-reveal>
+          <div class="card__frame"><div class="card__img" style="--cx:44%;--cy:40%;--cz:360%"></div></div>
+          <div class="card__body">
+            <span class="card__idx">II</span>
+            <h3>Squelette Noir</h3>
+            <p>An open-worked dial poised over a bottomless studio black.</p>
+            <span class="price">On request</span>
+          </div>
         </article>
-        <article class="card">
-          <div class="card__img" style="--fx:56%;--fy:52%"></div>
-          <h3>Réserve Perpétuelle</h3>
-          <p>Seventy-two hours of autonomy, quietly kept.</p>
-          <span class="price">On request</span>
+        <article class="card" data-reveal>
+          <div class="card__frame"><div class="card__img" style="--cx:58%;--cy:54%;--cz:320%"></div></div>
+          <div class="card__body">
+            <span class="card__idx">III</span>
+            <h3>Réserve Perpétuelle</h3>
+            <p>Seventy-two hours of autonomy, kept in absolute quiet.</p>
+            <span class="price">On request</span>
+          </div>
         </article>
       </div>
     </section>
 
     <section class="maison" id="maison">
-      <h2 class="section-title">The Maison</h2>
-      <p class="maison__lede">
+      <div class="rule" data-reveal></div>
+      <h2 class="section-title" data-reveal>The Maison</h2>
+      <p class="maison__lede" data-reveal>
         Every VÉRION is assembled by a single watchmaker, in silence, under a
         single lamp. Nothing is added that time itself would not permit.
       </p>
+      <div class="stats">
+        <div class="stat" data-reveal><span class="stat__n">1874</span><span class="stat__l">Founded, Geneva</span></div>
+        <div class="stat" data-reveal><span class="stat__n">412</span><span class="stat__l">Hours per piece</span></div>
+        <div class="stat" data-reveal><span class="stat__n">1&nbsp;/&nbsp;1</span><span class="stat__l">Made to order</span></div>
+      </div>
     </section>
   </main>
 
   <footer id="contact">
     <span class="brand brand--sm">VÉRION</span>
-    <p>© <span id="yr"></span> VÉRION Manufacture. Time, refined.</p>
+    <p>© <span id="yr"></span> VÉRION Manufacture · Geneva · Time, refined.</p>
   </footer>
 
   <script src="script.js"></script>
