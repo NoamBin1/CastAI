@@ -89,6 +89,25 @@ body.opening-removed #cinematic{display:none}
 .filmvig{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 92% 100% at 50% 48%,transparent 46%,rgba(0,0,0,.5) 84%,rgba(0,0,0,.85) 100%)}
 
+/* tap-to-play cue, shown only if the browser blocks muted autoplay */
+#cinematic.needtap{pointer-events:auto}
+.introcue{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;
+  width:88px;height:88px;border-radius:50%;display:none;place-items:center;
+  background:rgba(10,7,8,.42);border:1px solid rgba(201,160,106,.6);
+  color:var(--gold-soft);font-size:26px;cursor:pointer;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  transition:background .3s ease,transform .3s ease;
+  animation:cue-pulse 2.1s ease-in-out infinite;
+}
+.introcue span{transform:translateX(2px)}
+.introcue:hover{background:rgba(201,160,106,.2)}
+#cinematic.needtap .introcue{display:grid}
+@keyframes cue-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,160,106,.35)}
+  50%{box-shadow:0 0 0 20px rgba(201,160,106,0)}
+}
+
 /* dark dial texture that grows to *become* the hero background */
 .dialfill{position:absolute;left:50%;top:48%;width:10px;height:10px;
   transform:translate(-50%,-50%) scale(1);border-radius:50%;

@@ -7,7 +7,7 @@
   "use strict";
 
   var body = document.body;
-  var HARD_FALLBACK_MS = 7000;   // never stay locked behind the overlay
+  var HARD_FALLBACK_MS = 12000;  // time for a desktop user to tap the cue
   var timers = [];
 
   var yr = document.getElementById("yr");
@@ -48,26 +48,42 @@
     ended = false;
     body.classList.remove("opening-done", "opening-removed");
     body.classList.add("cinematic-active");
-    if (cine) cine.classList.remove("ending");
+    if (cine) cine.classList.remove("ending", "needtap");
 
     if (!video){ endIntro(); return; }
 
+    var started = false;
     try { video.currentTime = 0; } catch(e){}
-    var p = video.play();
-    if (p && p.catch) p.catch(function(){ /* autoplay blocked -> retry on interaction */ });
-    // if a browser blocks muted autoplay, start on the first tap/click
-    var retry = function(){ var q = video.play(); if (q && q.catch) q.catch(function(){}); };
-    document.addEventListener("pointerdown", retry, { once: true });
 
-    // start the hand-off just before the clip ends (overlap the last motion)
-    video.onended = endIntro;
+    var attempt = function(){ var q = video.play(); if (q && q.catch) q.catch(function(){}); };
+
+    video.onplaying = function(){ started = true; if (cine) cine.classList.remove("needtap"); };
+    video.onended   = endIntro;
     video.ontimeupdate = function(){
       if (video.duration && video.currentTime >= video.duration - 0.9) endIntro();
     };
     video.onerror = function(){ timers.push(setTimeout(endIntro, 300)); };
 
-    // hard fallback so the site always appears
-    timers.push(setTimeout(endIntro, HARD_FALLBACK_MS));
+    attempt();
+
+    // If muted autoplay is blocked (common on desktop), reveal a tap-to-play cue.
+    timers.push(setTimeout(function(){
+      if (!started && (video.paused || video.readyState < 2) && cine) cine.classList.add("needtap");
+    }, 1200));
+
+    // A tap anywhere on the film (or the cue) starts it.
+    if (cine){
+      cine.addEventListener("pointerdown", function(){
+        cine.classList.remove("needtap");
+        attempt();
+      });
+    }
+
+    // Safety: if playback never happens (autoplay blocked and ignored),
+    // don't strand the viewer on the poster forever.
+    timers.push(setTimeout(function(){ if (!started) endIntro(); }, HARD_FALLBACK_MS));
+    // If it did play but stalls, still hand off eventually.
+    timers.push(setTimeout(endIntro, 16000));
   }
 
   if (reduce){
