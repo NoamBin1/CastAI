@@ -1,0 +1,30 @@
+name: Bundle intro video into repo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/verion-watch-cinematic-1sb1zs"]
+    paths: [".github/workflows/bundle-video.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/verion-watch-cinematic-1sb1zs
+      - name: Fetch the generated clip
+        run: |
+          mkdir -p assets
+          curl -fSL -o assets/intro.mp4 'https://d8j0ntlcm91z4.cloudfront.net/user_3JYVuFccljLSf2X17PmIw0zHRLY/hf_20260927_184218_d8860d7e-3d05-45df-a93f-b1d8d868a0c0.mp4'
+          ls -la assets/intro.mp4
+      - name: Commit it
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/intro.mp4
+          git commit -m "Add bundled intro video (fetched by CI)" || echo "nothing to commit"
+          git push origin claude/verion-watch-cinematic-1sb1zs
