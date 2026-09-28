@@ -54,7 +54,10 @@
 
     try { video.currentTime = 0; } catch(e){}
     var p = video.play();
-    if (p && p.catch) p.catch(function(){ /* autoplay blocked -> timers cover it */ });
+    if (p && p.catch) p.catch(function(){ /* autoplay blocked -> retry on interaction */ });
+    // if a browser blocks muted autoplay, start on the first tap/click
+    var retry = function(){ var q = video.play(); if (q && q.catch) q.catch(function(){}); };
+    document.addEventListener("pointerdown", retry, { once: true });
 
     // start the hand-off just before the clip ends (overlap the last motion)
     video.onended = endIntro;
