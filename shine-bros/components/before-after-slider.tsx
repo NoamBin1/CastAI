@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 
 export default function BeforeAfterSlider() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,25 +67,34 @@ export default function BeforeAfterSlider() {
           role="img"
           aria-label="Before and after window cleaning comparison"
         >
-          {/* Before — full width, navy placeholder */}
-          <div className="absolute inset-0 bg-navy-800 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-white/20 text-sm font-medium">BEFORE</p>
-              <p className="text-white/10 text-xs mt-1">
-                Add before photo to /public/images/before.jpg
-              </p>
-            </div>
+          {/* Before — full width */}
+          <Image
+            src="/images/before.jpg"
+            alt="Window before cleaning"
+            fill
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
+            draggable={false}
+          />
+
+          {/* After — clipped to reveal from right */}
+          <div
+            className="absolute inset-0"
+            style={{ clipPath: `inset(0 0 0 ${position}%)` }}
+          >
+            <Image
+              src="/images/after.jpg"
+              alt="Window after cleaning"
+              fill
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+              draggable={false}
+            />
           </div>
 
-          {/* After — clipped */}
-          <div
-            className="absolute inset-0 bg-navy-700 flex items-center justify-center"
-            style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-          >
-            <div className="text-center">
-              <p className="text-white/40 text-sm font-medium">AFTER</p>
-            </div>
-          </div>
+          {/* Labels */}
+          <span className="absolute top-3 left-3 text-xs font-semibold text-white/50 tracking-widest uppercase pointer-events-none">Before</span>
+          <span className="absolute top-3 right-3 text-xs font-semibold text-white/80 tracking-widest uppercase pointer-events-none">After</span>
 
           {/* Divider line */}
           <div
