@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ContactForm from "./contact-form";
 
 export default function ContactSection() {
@@ -64,7 +65,9 @@ export default function ContactSection() {
 
           {/* Right — form */}
           <div className="lg:w-7/12 bg-navy-800/60 border border-white/8 rounded p-6 sm:p-8">
-            <ContactForm />
+            <Suspense fallback={<div className="h-64" />}>
+              <ContactForm />
+            </Suspense>
           </div>
         </div>
       </div>

@@ -7,9 +7,6 @@ export default function AboutSection() {
       <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">
         {/* Text — left, centered on mobile */}
         <div className="lg:w-1/2 order-2 lg:order-1">
-          <p className="text-xs font-semibold tracking-widest text-gold-500 uppercase mb-4">
-            About us
-          </p>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold text-white mb-6 leading-snug">
             We&rsquo;re two brothers who grew up in Charlotte and take window
             cleaning seriously.

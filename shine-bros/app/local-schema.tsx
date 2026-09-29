@@ -35,13 +35,6 @@ export default function LocalBusinessSchema() {
       "Mooresville, NC",
     ],
     sameAs: [],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "5",
-      reviewCount: "140",
-      bestRating: "5",
-      worstRating: "1",
-    },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Window Cleaning Services",

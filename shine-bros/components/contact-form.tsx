@@ -1,44 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-const services = [
+const serviceOptions = [
   "Residential – exterior only",
   "Residential – interior & exterior",
   "Commercial – storefront",
   "Commercial – office building",
   "Post-construction clean",
+  "Spring & Fall – twice yearly",
+  "Quarterly service plan",
+  "Monthly commercial service",
   "Not sure yet",
 ];
 
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const searchParams = useSearchParams();
+  const preselectedService = searchParams.get("service") ?? "";
+
+  // Keep the preselected value in sync with the select
+  useEffect(() => {}, [preselectedService]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("submitting");
+    setErrorMsg("");
 
     const fd = new FormData(e.currentTarget);
-    const data = {
+    const payload = {
       name: fd.get("name") as string,
       phone: fd.get("phone") as string,
       email: (fd.get("email") as string) || null,
-      address: (fd.get("address") as string) || null,
       service: fd.get("service") as string,
+      address: (fd.get("address") as string) || null,
       message: (fd.get("message") as string) || null,
+      // honeypot — intentionally last, must not be visible to user
+      website: fd.get("website") as string,
     };
 
-    const supabase = createClient();
-    const { error } = await supabase.from("shine_bros_quotes").insert(data);
-
-    if (error) {
-      console.error(error);
+    try {
+      const res = await fetch("/api/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error ?? "Something went wrong. Please try again.");
+        setStatus("error");
+      } else {
+        setStatus("success");
+      }
+    } catch {
+      setErrorMsg("Network error. Please try again or call us directly.");
       setStatus("error");
-    } else {
-      setStatus("success");
     }
   }
 
@@ -67,6 +87,12 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Honeypot — hidden from real users, catches bots */}
+      <div style={{ display: "none" }} aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input type="text" id="website" name="website" tabIndex={-1} autoComplete="off" />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-1.5">
@@ -119,13 +145,11 @@ export default function ContactForm() {
           <select
             id="service"
             name="service"
+            defaultValue={preselectedService}
             className="w-full bg-navy-800 border border-white/15 rounded px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-gold-500/60 transition-colors appearance-none"
-            defaultValue=""
           >
-            <option value="" disabled>
-              Select a service
-            </option>
-            {services.map((s) => (
+            <option value="">Select a service</option>
+            {serviceOptions.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -163,7 +187,7 @@ export default function ContactForm() {
 
       {status === "error" && (
         <p className="text-sm text-red-400">
-          Something went wrong. Please try again or call us at (704) 555-0192.
+          {errorMsg || "Something went wrong. Please try again or call us at (704) 555-0192."}
         </p>
       )}
 

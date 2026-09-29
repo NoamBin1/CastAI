@@ -44,7 +44,7 @@ export default function Hero() {
               ))}
             </span>
             <span className="text-white/80 text-xs font-medium">
-              Rated 5 stars by 140+ Charlotte-area neighbors
+              Rated 5 stars by Charlotte-area neighbors
             </span>
           </div>
 
@@ -77,7 +77,7 @@ export default function Hero() {
               href="tel:+17045550192"
               className="inline-flex items-center justify-center border border-white/30 hover:border-white/60 text-white font-medium px-6 py-3 rounded transition-colors"
             >
-              Call (704) 555-0192
+              Call Us
             </a>
           </div>
         </div>
