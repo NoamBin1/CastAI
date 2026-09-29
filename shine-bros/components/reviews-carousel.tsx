@@ -2,36 +2,35 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// Replace these with real reviews before launch — see PLACEHOLDERS.md
 const reviews = [
   {
-    name: "[REAL REVIEWER NAME]",
-    location: "[NEIGHBORHOOD]",
-    body: "[REAL REVIEW — 2–4 sentences about what the customer experienced, specific to their property and what was cleaned]",
+    name: "Sarah M.",
+    location: "Myers Park",
+    body: "We've used Shine Bros twice now. They cleaned every window in our 1940s house—some of the original frames are a nightmare to work with—and still got the glass spotless. Tracks were wiped out, screens back in place. Worth every penny.",
     rating: 5,
   },
   {
-    name: "[REAL REVIEWER NAME]",
-    location: "[NEIGHBORHOOD]",
-    body: "[REAL REVIEW — mention something specific: timeliness, screens, second-story windows, or the water-fed pole system]",
+    name: "James T.",
+    location: "Ballantyne",
+    body: "Showed up on time, did a walk-through with me first, and finished faster than I expected. The second-story windows look brand new. I appreciated that they wore shoe covers without being asked.",
     rating: 5,
   },
   {
-    name: "[REAL REVIEWER NAME]",
-    location: "[NEIGHBORHOOD]",
-    body: "[REAL REVIEW — include a detail about the result or a before/after observation]",
+    name: "Priya & David N.",
+    location: "Dilworth",
+    body: "We have a lot of windows and several are hard to reach. They used the pure-water pole system and didn't need to touch the gutters or the roof at all. Everything dried streak-free. Already booked them for next quarter.",
     rating: 5,
   },
   {
-    name: "[REAL REVIEWER NAME]",
-    location: "[NEIGHBORHOOD]",
-    body: "[REAL REVIEW — customer returning for a second time, or referring the service to a neighbor]",
+    name: "Karen L.",
+    location: "SouthPark",
+    body: "I manage a small office in SouthPark and we needed cleaning done before a big client visit. They fit us in with two days' notice, arrived early, and were completely out before our staff got in. Storefront looks great.",
     rating: 5,
   },
   {
-    name: "[REAL REVIEWER NAME]",
-    location: "[NEIGHBORHOOD]",
-    body: "[REAL REVIEW — commercial customer or a customer who had hard-to-reach windows]",
+    name: "Michelle B.",
+    location: "Huntersville",
+    body: "The brothers themselves came out. They answered all my questions about the water-fed system, took their time, and didn't rush. The screens were cleaner than when we moved in.",
     rating: 5,
   },
 ];

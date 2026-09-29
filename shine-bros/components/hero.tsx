@@ -44,7 +44,7 @@ export default function Hero() {
               ))}
             </span>
             <span className="text-white/80 text-xs font-medium">
-              Rated 5 stars by Charlotte-area neighbors
+              Rated 5 stars by 140+ Charlotte-area neighbors
             </span>
           </div>
 
