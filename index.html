@@ -736,40 +736,50 @@ const mBand = metal(0x0d0d0c, 0.30, 0.45, 0.8);
 const mBg   = new THREE.MeshStandardMaterial({ color:0xf0eeea, roughness:0.9, metalness:0 });
 
 /* ─── FOIL POUCH ─────────────────────────── */
+// W:H:D = 1.0 : 1.7 : 0.18  — very flat, clearly a bag silhouette
 function makePouch(mat) {
   const g = new THREE.Group();
-  const scale = 1.15;
+  const W = 1.30, H = 2.10, D = 0.22;
 
-  // pillowed body
-  const bGeo = new THREE.BoxGeometry(1.1*scale, 1.65*scale, 0.30*scale, 6, 12, 3);
+  // main body — flat with strong pillow bulge in the centre
+  const bGeo = new THREE.BoxGeometry(W, H, D, 8, 16, 4);
   const bPos = bGeo.attributes.position;
   for (let i = 0; i < bPos.count; i++) {
-    const x = bPos.getX(i), y = bPos.getY(i), z = bPos.getZ(i);
-    const bx = 1 - Math.abs(x/(0.55*scale));
-    const by = 1 - Math.abs(y/(0.825*scale));
-    const bulge = bx * by * 0.13 * scale;
-    bPos.setZ(i, z + (z>0?bulge:-bulge));
+    const nx = Math.abs(bPos.getX(i)) / (W*0.5);
+    const ny = Math.abs(bPos.getY(i)) / (H*0.5);
+    const bz  = bPos.getZ(i);
+    // bulge peaks at centre, fades to zero at edges
+    const bulge = (1 - nx*nx) * (1 - ny*ny) * 0.26;
+    bPos.setZ(i, bz + (bz > 0 ? bulge : -bulge));
   }
-  bPos.needsUpdate=true; bGeo.computeVertexNormals();
+  bPos.needsUpdate = true; bGeo.computeVertexNormals();
   g.add(new THREE.Mesh(bGeo, mat));
 
-  // heat seals
-  [[0.9*scale],[-(0.9*scale)]].forEach(([y])=>{
-    const s = new THREE.Mesh(new THREE.BoxGeometry(1.13*scale,0.14*scale,0.20*scale), mSilA);
-    s.position.y = y; g.add(s);
+  // top heat seal — wider than body, very thin
+  const tSeal = new THREE.Mesh(new THREE.BoxGeometry(W+0.04, 0.15, D*0.7), mSilA);
+  tSeal.position.y = H*0.5 + 0.075; g.add(tSeal);
+
+  // bottom seal
+  const bSeal = new THREE.Mesh(new THREE.BoxGeometry(W+0.04, 0.15, D*0.7), mSilA);
+  bSeal.position.y = -(H*0.5 + 0.075); g.add(bSeal);
+
+  // tear notch (small cut on top-right of top seal)
+  const notch = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.20, D*0.8), mDark);
+  notch.position.set(W*0.48, H*0.5+0.075, 0); g.add(notch);
+
+  // side seams (thin vertical strips, left and right edges)
+  [-W*0.5, W*0.5].forEach(x => {
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.055, H*0.92, D*0.5), mDark);
+    seam.position.set(x, 0, 0); g.add(seam);
   });
 
-  // tear notch
-  const nt = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.17*scale,0.24*scale), mDark);
-  nt.position.set(0.535*scale, 0.85*scale, 0); g.add(nt);
+  // label / branding band
+  const band = new THREE.Mesh(new THREE.BoxGeometry(W-0.08, H*0.24, D+0.01), mBand);
+  band.position.y = H*0.08; g.add(band);
 
-  // label band
-  const lb = new THREE.Mesh(new THREE.BoxGeometry(1.12*scale, 0.22*scale, 0.31*scale), mBand);
-  lb.position.y = 0.08*scale; g.add(lb);
-
-  // wordmark bar
-  const wm = new THREE.Mesh(new THREE.BoxGeometry(0.50*scale, 0.048, 0.006), mBg);
-  wm.position.set(0, 0.08*scale, 0.157*scale); g.add(wm);
+  // wordmark bar on label
+  const wm = new THREE.Mesh(new THREE.BoxGeometry(W*0.48, 0.055, 0.008), mBg);
+  wm.position.set(0, H*0.08, (D+0.01)*0.5+0.001); g.add(wm);
 
   return g;
 }
@@ -777,40 +787,49 @@ function makePouch(mat) {
 /* ─── SPRAY CAN ──────────────────────────── */
 function makeSprayCan() {
   const g = new THREE.Group();
-  const sc = 1.12;
+  // radius 0.50, total height ~3.8 → clearly can-shaped
+  const R = 0.50, BH = 2.80;
 
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.44*sc,0.44*sc,2.7*sc,48), mSilA));
+  // main body cylinder
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(R, R, BH, 48), mSilA));
 
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.44*sc,48,24), mSilA);
-  dome.position.y = -1.35*sc; g.add(dome);
+  // bottom rounded cap
+  const bot = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 24, 0, Math.PI*2, Math.PI/2, Math.PI/2), mSilA);
+  bot.position.y = -BH/2; g.add(bot);
 
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.446*sc,0.446*sc,1.15*sc,48), mBand);
-  band.position.y = -0.18*sc; g.add(band);
+  // label band (dark, ~40% of body height)
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(R+0.002, R+0.002, BH*0.44, 48), mBand);
+  band.position.y = -BH*0.06; g.add(band);
 
-  // logo bar
-  const logo = new THREE.Mesh(new THREE.BoxGeometry(0.54*sc,0.052,0.006), mBg);
-  logo.position.set(0,-0.18*sc,0.448*sc); g.add(logo);
-  const logo2 = new THREE.Mesh(new THREE.BoxGeometry(0.30*sc,0.034,0.006), mBg);
-  logo2.position.set(0,-0.28*sc,0.448*sc); g.add(logo2);
+  // wordmark lines on band
+  [[0.60, 0.058],[0.36, 0.038]].forEach(([w,h], i) => {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.006), mBg);
+    bar.position.set(0, -BH*0.06 + (i===0?0.08:-0.07), R+0.003); g.add(bar);
+  });
 
-  const sho = new THREE.Mesh(new THREE.CylinderGeometry(0.27*sc,0.44*sc,0.55*sc,48), mSilA);
-  sho.position.y = 1.625*sc; g.add(sho);
+  // shoulder taper
+  const sho = new THREE.Mesh(new THREE.CylinderGeometry(0.30, R, 0.58, 48), mSilA);
+  sho.position.y = BH/2 + 0.29; g.add(sho);
 
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.25*sc,0.27*sc,0.28*sc,48), mDark);
-  neck.position.y = 2.03*sc; g.add(neck);
+  // neck
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.30, 0.28, 48), mDark);
+  neck.position.y = BH/2 + 0.72; g.add(neck);
 
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.315*sc,0.27*sc,0.24*sc,48), mDark);
-  cap.position.y = 2.24*sc; g.add(cap);
+  // actuator cap (slightly wider than neck)
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.28, 0.26, 48), mDark);
+  cap.position.y = BH/2 + 0.99; g.add(cap);
 
-  // actuator button ridge
-  const ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.22*sc,0.22*sc,0.06,24), mSilB);
-  ridge.position.y = 2.38*sc; g.add(ridge);
+  // actuator press button
+  const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.07, 32), mSilB);
+  btn.position.y = BH/2 + 1.145; g.add(btn);
 
-  const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.052,0.052,0.20*sc,16), mDark);
-  noz.rotation.z = Math.PI/2; noz.position.set(0.37*sc,2.30*sc,0); g.add(noz);
+  // nozzle tube
+  const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.22, 16), mDark);
+  noz.rotation.z = Math.PI/2; noz.position.set(0.40, BH/2+1.10, 0); g.add(noz);
 
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.062,16,12), mSilC);
-  tip.position.set(0.47*sc,2.30*sc,0); g.add(tip);
+  // nozzle tip sphere
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.068, 16, 12), mSilC);
+  tip.position.set(0.52, BH/2+1.10, 0); g.add(tip);
 
   return g;
 }
@@ -821,15 +840,17 @@ const pouch1   = makePouch(mSilB);
 const pouch2   = makePouch(mSilC);
 const sprayCan = makeSprayCan();
 
-pouch0.position.set(-4.0, 0.8, 0.8);
-pouch1.position.set( 3.2, 0.4, 0.4);
-pouch2.position.set( 0.2, 4.0,-0.6);
-sprayCan.position.set(-1.0, 3.8, 0.2);
+pouch0.position.set(-3.8, 0.6, 0.6);
+pouch1.position.set( 3.0, 0.2, 0.3);
+pouch2.position.set( 0.4, 4.2,-0.5);
+sprayCan.position.set(-0.8, 3.6, 0.3);
 
-pouch0.rotation.set( 0.28,-0.36, 0.22);
-pouch1.rotation.set(-0.18, 0.48,-0.12);
-pouch2.rotation.set( 0.44, 0.24, 0.28);
-sprayCan.rotation.set(0.08, 0.36, 0.06);
+// pouches: slight tilt so they're not perfectly flat-on
+pouch0.rotation.set( 0.18,-0.30, 0.14);
+pouch1.rotation.set(-0.12, 0.38,-0.10);
+pouch2.rotation.set( 0.32, 0.20, 0.22);
+// can upright with slight lean — silhouette reads immediately
+sprayCan.rotation.set(0.06, 0.28, 0.05);
 
 scene.add(pouch0, pouch1, pouch2, sprayCan);
 
