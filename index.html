@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FORM — Digital Products Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,wght@0,100;0,200;0,300;0,400;1,200&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --white:      #f5f3ef;
+            --off-white:  #edeae4;
+            --light-gray: #d4d0c8;
+            --mid-gray:   #908d86;
+            --dark-gray:  #3a3835;
+            --black:      #0e0d0b;
+            --silver:     #c4c0b8;
+        }
+
+        html { font-size: 16px; scroll-behavior: smooth; }
+
+        body {
+            background: var(--white);
+            color: var(--black);
+            font-family: 'Inter', sans-serif;
+            font-weight: 200;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* ── CURSOR ─────────────────────────── */
+        .cursor {
+            position: fixed;
+            width: 7px; height: 7px;
+            background: var(--black);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width .25s, height .25s, background .25s;
+        }
+        .cursor-ring {
+            position: fixed;
+            width: 30px; height: 30px;
+            border: 1px solid rgba(14,13,11,.35);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width .3s, height .3s;
+        }
+
+        /* ── EDGE NAV ───────────────────────── */
+        .nav-edge {
+            position: fixed; top: 0; bottom: 0;
+            display: flex; align-items: center;
+            z-index: 100; pointer-events: none;
+        }
+        .nav-edge.left  { left: 18px; }
+        .nav-edge.right { right: 18px; }
+        .nav-edge-text {
+            font-family: 'Space Mono', monospace;
+            font-size: 8px; letter-spacing: .22em;
+            color: var(--light-gray); text-transform: uppercase;
+            writing-mode: vertical-rl; text-orientation: mixed;
+        }
+        .nav-edge.left .nav-edge-text { transform: rotate(180deg); }
+
+        /* ── TOP NAV ────────────────────────── */
+        .nav-top {
+            position: fixed; top: 0; left: 0; right: 0;
+            padding: 18px 64px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+        }
+        .nav-logo {
+            font-family: 'Space Mono', monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+            color: var(--black); text-decoration: none; pointer-events: auto;
+        }
+        .nav-links { display: flex; gap: 28px; list-style: none; pointer-events: auto; }
+        .nav-links a {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            letter-spacing: .2em; text-transform: uppercase;
+            color: var(--mid-gray); text-decoration: none;
+            transition: color .2s;
+        }
+        .nav-links a:hover { color: var(--black); }
+        .nav-counter {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            color: var(--light-gray); letter-spacing: .1em;
+        }
+
+        /* ── HERO ───────────────────────────── */
+        .hero {
+            position: relative; width: 100%; height: 100vh; overflow: hidden;
+            background: var(--white);
+        }
+
+        /* subtle noise texture */
+        .hero::before {
+            content: '';
+            position: absolute; inset: 0; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* technical grid */
+        .hero-grid {
+            position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(14,13,11,.028) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14,13,11,.028) 1px, transparent 1px);
+            background-size: 64px 64px;
+        }
+
+        /* hairlines */
+        .hair-h, .hair-v { position: absolute; pointer-events: none; z-index: 1; }
+        .hair-h { left: 64px; right: 64px; height: 1px; background: rgba(14,13,11,.05); }
+        .hair-v { top: 0; bottom: 0; width: 1px;  background: rgba(14,13,11,.05); }
+
+        #physics-canvas {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            z-index: 2; pointer-events: none;
+        }
+
+        /* corner labels */
+        .hlabel {
+            position: absolute; font-family: 'Space Mono', monospace;
+            font-size: 7.5px; letter-spacing: .14em;
+            color: var(--light-gray); pointer-events: none; z-index: 4;
+        }
+        .hlabel.tl { top: 72px;  left:  64px; }
+        .hlabel.tr { top: 72px;  right: 64px; text-align: right; }
+        .hlabel.bl { bottom: 28px; left:  64px; }
+        .hlabel.br { bottom: 28px; right: 64px; }
+
+        /* main headline */
+        .hero-hl {
+            position: absolute; bottom: 8vh; left: 0; right: 0;
+            z-index: 3; padding: 0 36px; pointer-events: none;
+        }
+        .hero-hl h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(72px, 13.5vw, 215px);
+            line-height: .9; letter-spacing: -.01em;
+            color: var(--black); text-transform: uppercase;
+            mix-blend-mode: multiply;
+        }
+        .hero-hl h1 .s2 { display: block; padding-left: 7vw;  }
+        .hero-hl h1 .s3 { display: block; padding-left: 14vw; }
+
+        /* floating numbers */
+        .fnum {
+            position: absolute; font-family: 'Space Mono', monospace;
+            font-size: 8px; color: var(--light-gray); letter-spacing: .1em;
+            pointer-events: none; z-index: 4;
+        }
+
+        /* scroll indicator */
+        .scroll-ind {
+            position: absolute; bottom: 22px; left: 50%;
+            transform: translateX(-50%); z-index: 5;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .scroll-line {
+            width: 1px; height: 36px; background: var(--black);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .scroll-label {
+            font-family: 'Space Mono', monospace; font-size: 7px;
+            letter-spacing: .2em; color: var(--mid-gray); text-transform: uppercase;
+            writing-mode: vertical-rl;
+        }
+        @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:.9} }
+
+        /* ── SUB-HEADER BAND ────────────────── */
+        .subhead {
+            padding: 36px 64px;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 32px;
+        }
+        .subhead h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(30px, 4.5vw, 72px); letter-spacing: .02em;
+        }
+        .subhead p {
+            font-size: 11.5px; color: var(--mid-gray); max-width: 260px;
+            font-weight: 300; line-height: 1.75; text-align: right;
+        }
+
+        /* ── MARQUEE ─────────────────────────── */
+        .marquee-wrap {
+            padding: 22px 0; overflow: hidden;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .marquee-track {
+            display: flex; gap: 64px; white-space: nowrap;
+            animation: marquee 22s linear infinite;
+        }
+        .marquee-track span {
+            font-family: 'Bebas Neue', sans-serif; font-size: 17px;
+            letter-spacing: .12em; color: var(--light-gray); flex-shrink: 0;
+        }
+        .marquee-track em { color: var(--mid-gray); font-style: normal; }
+        @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+        /* ── SECTIONS ───────────────────────── */
+        .section { padding: 112px 64px; position: relative; }
+
+        .section-label {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            letter-spacing: .25em; text-transform: uppercase;
+            color: var(--mid-gray); margin-bottom: 56px;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .section-label::before {
+            content: ''; display: block; width: 20px; height: 1px; background: var(--mid-gray);
+        }
+        .section-label .n { color: var(--light-gray); }
+
+        /* ── SERVICES ───────────────────────── */
+        .services-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--light-gray);
+        }
+        .sv-item {
+            padding: 44px 28px 44px 0;
+            border-right: 1px solid var(--light-gray);
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .sv-item:nth-child(3n) { border-right: none; }
+        .sv-num {
+            font-family: 'Space Mono', monospace; font-size: 7.5px;
+            color: var(--light-gray); margin-bottom: 28px; letter-spacing: .1em;
+        }
+        .sv-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(28px, 3vw, 52px);
+            line-height: 1; color: var(--black); margin-bottom: 18px;
+            letter-spacing: .02em;
+        }
+        .sv-desc {
+            font-size: 11.5px; line-height: 1.75; color: var(--mid-gray);
+            font-weight: 300; max-width: 260px;
+        }
+
+        /* ── WORK ───────────────────────────── */
+        .work-section { padding: 80px 0; overflow: hidden; }
+        .work-header {
+            padding: 0 64px 56px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .work-hl {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(56px, 8vw, 116px); line-height: 1; color: var(--black);
+        }
+        .work-meta {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            color: var(--mid-gray); letter-spacing: .15em; text-transform: uppercase;
+        }
+        .work-list { border-top: 1px solid var(--light-gray); }
+        .wi {
+            display: grid; grid-template-columns: 72px 1fr auto 140px;
+            align-items: center; gap: 28px;
+            padding: 24px 64px;
+            border-bottom: 1px solid var(--light-gray);
+            transition: background .3s; cursor: none;
+        }
+        .wi:hover { background: var(--off-white); }
+        .wi-num {
+            font-family: 'Space Mono', monospace; font-size: 9px;
+            color: var(--light-gray); letter-spacing: .1em;
+        }
+        .wi-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(24px, 2.8vw, 44px);
+            color: var(--black); letter-spacing: .02em;
+            transition: transform .4s cubic-bezier(.23,1,.32,1);
+        }
+        .wi:hover .wi-title { transform: translateX(14px); }
+        .wi-tags { display: flex; gap: 6px; }
+        .tag {
+            font-family: 'Space Mono', monospace; font-size: 7.5px;
+            letter-spacing: .15em; text-transform: uppercase;
+            color: var(--mid-gray); padding: 3px 8px;
+            border: 1px solid var(--light-gray);
+        }
+        .wi-year {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            color: var(--light-gray); text-align: right; letter-spacing: .1em;
+        }
+
+        /* ── MANIFESTO ──────────────────────── */
+        .manifesto {
+            padding: 140px 64px;
+            display: flex; justify-content: flex-end;
+        }
+        .mani-inner { max-width: 700px; }
+        .mani-quote {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(44px, 5.5vw, 90px);
+            line-height: 1.06; color: var(--black); margin-bottom: 36px;
+        }
+        .mani-body {
+            font-size: 12px; line-height: 1.85; color: var(--mid-gray);
+            font-weight: 300; columns: 2; column-gap: 36px;
+        }
+
+        /* ── PROCESS ─────────────────────────── */
+        .process-section {
+            padding: 80px 64px 140px;
+            border-top: 1px solid var(--light-gray);
+        }
+        .steps { display: flex; gap: 0; margin-top: 56px; }
+        .step {
+            flex: 1; padding: 40px 28px 40px 0;
+            border-right: 1px solid var(--light-gray);
+        }
+        .step:first-child { padding-left: 0; }
+        .step:last-child  { border-right: none; }
+        .step + .step { padding-left: 28px; }
+        .step-n {
+            font-family: 'Space Mono', monospace; font-size: 38px;
+            font-weight: 700; color: var(--off-white);
+            line-height: 1; margin-bottom: 20px; letter-spacing: -.02em;
+        }
+        .step-t {
+            font-family: 'Bebas Neue', sans-serif; font-size: 30px;
+            color: var(--black); margin-bottom: 14px; letter-spacing: .02em;
+        }
+        .step-d { font-size: 11.5px; line-height: 1.75; color: var(--mid-gray); font-weight: 300; }
+
+        /* ── STATS BAND ─────────────────────── */
+        .stats {
+            padding: 64px; background: var(--off-white);
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid var(--light-gray);
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .stat {
+            padding: 0 28px 0 0;
+            border-right: 1px solid var(--light-gray);
+        }
+        .stat:last-child { border-right: none; padding-left: 28px; padding-right: 0; }
+        .stat + .stat { padding-left: 28px; }
+        .stat-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(48px, 5vw, 80px); line-height: 1;
+            color: var(--black); letter-spacing: .01em;
+        }
+        .stat-label {
+            font-family: 'Space Mono', monospace; font-size: 8px;
+            letter-spacing: .2em; text-transform: uppercase;
+            color: var(--mid-gray); margin-top: 8px;
+        }
+
+        /* ── FOOTER ─────────────────────────── */
+        .footer {
+            background: var(--black); color: var(--silver); padding: 72px 64px;
+        }
+        .footer-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 72px; padding-bottom: 72px;
+            border-bottom: 1px solid rgba(196,192,184,.15);
+        }
+        .foot-hl {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(56px, 7.5vw, 112px); line-height: .92; color: var(--white);
+        }
+        .footer-right {
+            display: flex; flex-direction: column; align-items: flex-end;
+            gap: 18px; padding-top: 12px;
+        }
+        .cta-btn {
+            display: inline-flex; align-items: center; gap: 14px;
+            padding: 14px 28px;
+            border: 1px solid var(--silver); color: var(--white);
+            font-family: 'Space Mono', monospace; font-size: 9px;
+            letter-spacing: .2em; text-transform: uppercase;
+            text-decoration: none; transition: all .3s; cursor: none;
+        }
+        .cta-btn:hover { background: var(--white); color: var(--black); }
+        .foot-email {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            letter-spacing: .15em; color: rgba(196,192,184,.45);
+        }
+        .footer-bottom {
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .foot-copy {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            letter-spacing: .15em; color: rgba(196,192,184,.35);
+        }
+        .foot-nav { display: flex; gap: 28px; }
+        .foot-nav a {
+            font-family: 'Space Mono', monospace; font-size: 8.5px;
+            letter-spacing: .15em; text-transform: uppercase;
+            color: rgba(196,192,184,.35); text-decoration: none; transition: color .2s;
+        }
+        .foot-nav a:hover { color: var(--white); }
+
+        /* ── FADE UP ─────────────────────────── */
+        .fu { opacity: 0; transform: translateY(28px); transition: opacity .85s ease, transform .85s ease; }
+        .fu.vis { opacity: 1; transform: none; }
+
+        /* ── RESPONSIVE ─────────────────────── */
+        @media (max-width: 768px) {
+            .nav-edge { display: none; }
+            .nav-top, .subhead, .section, .process-section, .footer { padding-left: 20px; padding-right: 20px; }
+            .services-grid { grid-template-columns: 1fr; }
+            .sv-item { border-right: none; }
+            .wi { grid-template-columns: 40px 1fr; }
+            .wi-tags, .wi-year { display: none; }
+            .work-header { padding: 0 20px 40px; }
+            .manifesto { padding: 80px 20px; }
+            .mani-body { columns: 1; }
+            .steps { flex-direction: column; }
+            .step { border-right: none; border-bottom: 1px solid var(--light-gray); }
+            .stats { grid-template-columns: repeat(2, 1fr); row-gap: 40px; }
+            .stat { border-right: none; }
+            .hlabel { display: none; }
+            .footer-top { flex-direction: column; gap: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor"  id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- EDGE NAV -->
+<div class="nav-edge left"><span class="nav-edge-text">AUTHENTIC DIGITAL PRODUCTS</span></div>
+<div class="nav-edge right"><span class="nav-edge-text">SERVICE STORE</span></div>
+
+<!-- TOP NAV -->
+<nav class="nav-top">
+    <a href="#" class="nav-logo">FORM</a>
+    <ul class="nav-links">
+        <li><a href="#work">Work</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+    <span class="nav-counter">2024 — 001</span>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════ -->
+<section class="hero" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hair-h" style="top:50%"></div>
+    <div class="hair-v" style="left:50%"></div>
+
+    <canvas id="physics-canvas"></canvas>
+
+    <span class="hlabel tl">LAT 40.712 / LON −74.005</span>
+    <span class="hlabel tr">STUDIO — INDEX : 001</span>
+    <span class="hlabel bl">© FORM STUDIO 2024</span>
+    <span class="hlabel br">PROJECTS — ONGOING</span>
+
+    <span class="fnum" style="top:40%;right:64px">031</span>
+    <span class="fnum" style="top:22%;left:64px">——</span>
+    <span class="fnum" style="top:65%;left:64px">COLLECTION I</span>
+
+    <div class="hero-hl" id="heroHl">
+        <h1>DIGITAL<span class="s2">PRODUCTS</span><span class="s3">FOR</span></h1>
+    </div>
+
+    <div class="scroll-ind">
+        <span class="scroll-label">Scroll</span>
+        <div class="scroll-line"></div>
+    </div>
+</section>
+
+<!-- SUB-HEADER -->
+<div class="subhead">
+    <h2>CONTEMPORARY BRANDS</h2>
+    <p>We craft digital product experiences at the intersection of luxury design and technical precision. Form follows function. Function becomes art.</p>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+    <div class="marquee-track" id="mqTrack">
+        <span>BRAND IDENTITY <em>●</em></span>
+        <span>WEB EXPERIENCE <em>●</em></span>
+        <span>DIGITAL PRODUCTS <em>●</em></span>
+        <span>MOTION DESIGN <em>●</em></span>
+        <span>CREATIVE DIRECTION <em>●</em></span>
+        <span>3D &amp; IMMERSIVE <em>●</em></span>
+        <span>BRAND IDENTITY <em>●</em></span>
+        <span>WEB EXPERIENCE <em>●</em></span>
+        <span>DIGITAL PRODUCTS <em>●</em></span>
+        <span>MOTION DESIGN <em>●</em></span>
+        <span>CREATIVE DIRECTION <em>●</em></span>
+        <span>3D &amp; IMMERSIVE <em>●</em></span>
+    </div>
+</div>
+
+<!-- ══ SERVICES ═══════════════════════════ -->
+<section class="section" id="services">
+    <div class="section-label"><span class="n">01</span> Services</div>
+    <div class="services-grid">
+        <div class="sv-item fu">
+            <div class="sv-num">01 — STRATEGY</div>
+            <div class="sv-title">Brand<br>Strategy</div>
+            <p class="sv-desc">Positioning, identity systems, and competitive landscapes built for markets that don't stand still.</p>
+        </div>
+        <div class="sv-item fu">
+            <div class="sv-num">02 — DESIGN</div>
+            <div class="sv-title">Digital<br>Design</div>
+            <p class="sv-desc">Interface design that performs at the luxury tier — meticulous, functional, unforgettable.</p>
+        </div>
+        <div class="sv-item fu">
+            <div class="sv-num">03 — BUILD</div>
+            <div class="sv-title">Product<br>Engineering</div>
+            <p class="sv-desc">From concept to deployment. We build with precision, at speed, without compromise.</p>
+        </div>
+        <div class="sv-item fu">
+            <div class="sv-num">04 — MOTION</div>
+            <div class="sv-title">Motion &amp;<br>3D</div>
+            <p class="sv-desc">Cinematic motion and real-time 3D that transforms how brands communicate in every medium.</p>
+        </div>
+        <div class="sv-item fu">
+            <div class="sv-num">05 — CONTENT</div>
+            <div class="sv-title">Creative<br>Production</div>
+            <p class="sv-desc">Photography, video, editorial — content made for the feed and far beyond it.</p>
+        </div>
+        <div class="sv-item fu">
+            <div class="sv-num">06 — SYSTEMS</div>
+            <div class="sv-title">Design<br>Systems</div>
+            <p class="sv-desc">Scalable design infrastructure that grows with your brand, not against it.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══ STATS ════════════════════════════ -->
+<div class="stats">
+    <div class="stat fu"><div class="stat-num">87+</div><div class="stat-label">Projects Delivered</div></div>
+    <div class="stat fu"><div class="stat-num">12</div><div class="stat-label">Years Combined</div></div>
+    <div class="stat fu"><div class="stat-num">40+</div><div class="stat-label">Brand Partners</div></div>
+    <div class="stat fu"><div class="stat-num">03</div><div class="stat-label">Continents</div></div>
+</div>
+
+<!-- ══ SELECTED WORK ══════════════════════ -->
+<section class="work-section" id="work">
+    <div class="work-header">
+        <h2 class="work-hl fu">Selected<br>Work</h2>
+        <span class="work-meta fu">06 Projects — 2022–2024</span>
+    </div>
+    <div class="work-list">
+        <div class="wi fu"><span class="wi-num">001</span><span class="wi-title">AURORA COSMETICS</span><div class="wi-tags"><span class="tag">Identity</span><span class="tag">Web</span></div><span class="wi-year">2024</span></div>
+        <div class="wi fu"><span class="wi-num">002</span><span class="wi-title">VESSEL SPIRITS</span><div class="wi-tags"><span class="tag">3D</span><span class="tag">Motion</span></div><span class="wi-year">2024</span></div>
+        <div class="wi fu"><span class="wi-num">003</span><span class="wi-title">MERIDIAN LABS</span><div class="wi-tags"><span class="tag">Product</span><span class="tag">Systems</span></div><span class="wi-year">2023</span></div>
+        <div class="wi fu"><span class="wi-num">004</span><span class="wi-title">CÔTE PARFUM</span><div class="wi-tags"><span class="tag">Identity</span><span class="tag">Content</span></div><span class="wi-year">2023</span></div>
+        <div class="wi fu"><span class="wi-num">005</span><span class="wi-title">ARCHFORM STUDIO</span><div class="wi-tags"><span class="tag">Web</span><span class="tag">Build</span></div><span class="wi-year">2023</span></div>
+        <div class="wi fu"><span class="wi-num">006</span><span class="wi-title">THE MINERAL EDIT</span><div class="wi-tags"><span class="tag">Strategy</span><span class="tag">Identity</span></div><span class="wi-year">2022</span></div>
+    </div>
+</section>
+
+<!-- ══ MANIFESTO ════════════════════════ -->
+<section class="manifesto">
+    <div class="mani-inner">
+        <div class="mani-quote fu">"We believe the best<br>digital products feel<br>inevitable."</div>
+        <div class="mani-body fu">
+            <p>Every pixel, interaction, and second of load time is a statement. We build for brands that understand this — that choose exactness over convenience, craft over templates, permanence over trend.</p>
+            <p>Our work lives at the intersection of editorial luxury and technical precision. We don't follow digital culture. We help define it.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══ PROCESS ══════════════════════════ -->
+<section class="process-section" id="process">
+    <div class="section-label"><span class="n">03</span> Process</div>
+    <div class="steps">
+        <div class="step fu"><div class="step-n">01</div><div class="step-t">Discover</div><p class="step-d">Deep research into your market, competitors, and brand equity. We map the terrain before we move.</p></div>
+        <div class="step fu"><div class="step-n">02</div><div class="step-t">Define</div><p class="step-d">Strategy, architecture, and creative direction. The blueprint for everything that follows.</p></div>
+        <div class="step fu"><div class="step-n">03</div><div class="step-t">Design</div><p class="step-d">From wireframes to high-fidelity. Iterative, collaborative, relentlessly refined.</p></div>
+        <div class="step fu"><div class="step-n">04</div><div class="step-t">Deploy</div><p class="step-d">Engineering, testing, and launch. We ship products that perform as beautifully as they look.</p></div>
+    </div>
+</section>
+
+<!-- ══ FOOTER ════════════════════════════ -->
+<footer class="footer" id="contact">
+    <div class="footer-top">
+        <div class="foot-hl">LET'S<br>BUILD<br>SOMETHING.</div>
+        <div class="footer-right">
+            <a href="mailto:hello@form.studio" class="cta-btn">START A PROJECT →</a>
+            <span class="foot-email">hello@form.studio</span>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span class="foot-copy">FORM STUDIO · NEW YORK · 2024</span>
+        <nav class="foot-nav">
+            <a href="#">Instagram</a>
+            <a href="#">LinkedIn</a>
+            <a href="#">Are.na</a>
+            <a href="#">Privacy</a>
+        </nav>
+    </div>
+</footer>
+
+<script>
+// ════════════════════════════════════════════
+// CURSOR
+// ════════════════════════════════════════════
+const cursor     = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+(function tickCursor() {
+    rx += (mx - rx) * .13;
+    ry += (my - ry) * .13;
+    cursor.style.left     = mx + 'px';
+    cursor.style.top      = my + 'px';
+    cursorRing.style.left = rx + 'px';
+    cursorRing.style.top  = ry + 'px';
+    requestAnimationFrame(tickCursor);
+})();
+
+document.querySelectorAll('a,button,.wi,.cta-btn').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.style.width = cursor.style.height = '14px'; cursorRing.style.width = cursorRing.style.height = '44px'; });
+    el.addEventListener('mouseleave', () => { cursor.style.width = cursor.style.height = '7px';  cursorRing.style.width = cursorRing.style.height = '30px'; });
+});
+
+// ════════════════════════════════════════════
+// THREE.JS — PHYSICS OBJECTS
+// ════════════════════════════════════════════
+(function() {
+    const canvas   = document.getElementById('physics-canvas');
+    const heroEl   = document.getElementById('hero');
+    let W = heroEl.offsetWidth, H = heroEl.offsetHeight;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+    renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(42, W / H, .1, 100);
+    camera.position.set(0, 1.5, 15);
+    camera.lookAt(0, 0, 0);
+
+    // ── Lighting ────────────────────────────
+    scene.add(new THREE.AmbientLight(0xffffff, .25));
+
+    const key = new THREE.DirectionalLight(0xfff0e8, 2.2);
+    key.position.set(4, 10, 6);
+    key.castShadow = true;
+    key.shadow.mapSize.width = key.shadow.mapSize.height = 2048;
+    key.shadow.camera.near  = .1; key.shadow.camera.far  = 40;
+    key.shadow.camera.left  = -10; key.shadow.camera.right = 10;
+    key.shadow.camera.top   = 10; key.shadow.camera.bottom = -10;
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0xd8e8ff, .7);
+    fill.position.set(-6, -2, 4);
+    scene.add(fill);
+
+    const rim = new THREE.DirectionalLight(0xffffff, 2.0);
+    rim.position.set(0, 4, -9);
+    scene.add(rim);
+
+    const top = new THREE.PointLight(0xffffff, 1.5, 22);
+    top.position.set(0, 9, 0);
+    scene.add(top);
+
+    const accent1 = new THREE.PointLight(0xeef0ff, .8, 16);
+    accent1.position.set(-4, 2, 3);
+    scene.add(accent1);
+
+    const accent2 = new THREE.PointLight(0xffeedd, .8, 16);
+    accent2.position.set( 4, 0, 3);
+    scene.add(accent2);
+
+    // ── Shadow floor ────────────────────────
+    const floorGeo = new THREE.PlaneGeometry(32, 32);
+    const floorMat = new THREE.ShadowMaterial({ opacity: .10 });
+    const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.position.y = -3.6;
+    floorMesh.receiveShadow = true;
+    scene.add(floorMesh);
+
+    // ── Material helpers ─────────────────────
+    function mm(hex, roughness, metalness) {
+        return new THREE.MeshStandardMaterial({ color: hex, roughness, metalness });
+    }
+    const MAT = {
+        silver:  mm(0xcfcbc3, .08, .97),
+        darkCap: mm(0x2e2c29, .12, .92),
+        brushed: mm(0xbab6ae, .28, .86),
+        light:   mm(0xe4e0d9, .10, .94),
+        gold:    mm(0xc8bfa8, .09, .96),
+        chrome:  mm(0xd8d4cd, .04, .99),
+        pewter:  mm(0x888480, .22, .88),
+    };
+
+    // ── Object factory functions ──────────────
+    function serumBottle() {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, 1.1, 32), MAT.silver);
+        body.castShadow = true; g.add(body);
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(.2, 32, 16, 0, Math.PI*2, 0, Math.PI/2), MAT.silver);
+        dome.position.y = .55; dome.castShadow = true; g.add(dome);
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, .08, 32), MAT.darkCap);
+        base.position.y = -.59; base.castShadow = true; g.add(base);
+        const nozzleBase = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .12, 16), MAT.darkCap);
+        nozzleBase.position.y = .66; g.add(nozzleBase);
+        const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .2, 12), MAT.darkCap);
+        nozzle.position.y = .82; g.add(nozzle);
+        return g;
+    }
+
+    function foilPouch() {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(.84, 1.2, .16), MAT.brushed);
+        body.castShadow = true; g.add(body);
+        [.63, -.63].forEach(y => {
+            const seal = new THREE.Mesh(new THREE.BoxGeometry(.84, .06, .18), MAT.pewter);
+            seal.position.y = y; g.add(seal);
+        });
+        return g;
+    }
+
+    function metalTube() {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(.165, .13, 1.3, 32), MAT.light);
+        body.castShadow = true; g.add(body);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.175, .165, .2, 32), MAT.darkCap);
+        cap.position.y = .75; cap.castShadow = true; g.add(cap);
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(.175, 32, 16, 0, Math.PI*2, 0, Math.PI/2), MAT.darkCap);
+        tip.rotation.x = Math.PI; tip.position.y = .85; g.add(tip);
+        return g;
+    }
+
+    function compact() {
+        const g = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(.52, .52, .11, 48), MAT.brushed);
+        base.castShadow = true; g.add(base);
+        const lid = new THREE.Mesh(new THREE.CylinderGeometry(.53, .53, .09, 48), MAT.chrome);
+        lid.position.y = .10; lid.castShadow = true; g.add(lid);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(.515, .013, 8, 48), MAT.pewter);
+        ring.rotation.x = Math.PI / 2; ring.position.y = .055; g.add(ring);
+        return g;
+    }
+
+    function fragranceBottle() {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(.5, 1.0, .26), MAT.light);
+        body.castShadow = true; g.add(body);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(.085, .11, .26, 24), MAT.light);
+        neck.position.y = .63; g.add(neck);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .085, .18, 24), MAT.darkCap);
+        cap.position.y = .86; cap.castShadow = true; g.add(cap);
+        return g;
+    }
+
+    function lipstickTube() {
+        const g = new THREE.Group();
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .9, 24), MAT.gold);
+        barrel.castShadow = true; g.add(barrel);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .4, 24), MAT.darkCap);
+        cap.position.y = .65; cap.castShadow = true; g.add(cap);
+        const capTop = new THREE.Mesh(new THREE.SphereGeometry(.12, 24, 12, 0, Math.PI*2, 0, Math.PI/2), MAT.darkCap);
+        capTop.rotation.x = Math.PI; capTop.position.y = .85; g.add(capTop);
+        return g;
+    }
+
+    // ── Physics class ─────────────────────────
+    class PhysObj {
+        constructor(mesh, radius) {
+            this.mesh    = mesh;
+            this.radius  = radius || .52;
+            this.vel     = new THREE.Vector3((Math.random()-.5)*2.5, -(1+Math.random()*2), (Math.random()-.5)*.6);
+            this.angVel  = new THREE.Vector3((Math.random()-.5)*7, (Math.random()-.5)*7, (Math.random()-.5)*7);
+            this.restitution = .32;
+            this.airDrag = .9985;
+            this.floorY  = -3.6 + this.radius;
+            this.settled = 0;
+        }
+        update(dt, mpt) {
+            if (this.settled > 180) return;
+            this.vel.y -= 9.6 * dt;
+
+            // mouse repulsion
+            if (mpt) {
+                const d = mpt.clone().sub(this.mesh.position);
+                const dist = d.length();
+                if (dist < 2.8 && dist > .05) {
+                    const f = (.4 / (dist * dist)) * dt;
+                    this.vel.addScaledVector(d.normalize(), -f * 14);
+                    this.settled = 0;
+                }
+            }
+
+            this.vel.multiplyScalar(this.airDrag);
+            this.angVel.multiplyScalar(.997);
+            this.mesh.position.addScaledVector(this.vel, dt);
+            this.mesh.rotation.x += this.angVel.x * dt;
+            this.mesh.rotation.y += this.angVel.y * dt;
+            this.mesh.rotation.z += this.angVel.z * dt;
+
+            // floor
+            if (this.mesh.position.y < this.floorY) {
+                this.mesh.position.y = this.floorY;
+                if (Math.abs(this.vel.y) > .08) {
+                    this.vel.y  *= -this.restitution;
+                    this.vel.x  *= .88;
+                    this.vel.z  *= .88;
+                    this.angVel.multiplyScalar(.72);
+                } else {
+                    this.vel.y   = 0;
+                    this.vel.x  *= .93;
+                    this.vel.z  *= .93;
+                    this.angVel.multiplyScalar(.88);
+                    if (this.vel.lengthSq() < 2e-4 && this.angVel.lengthSq() < 4e-3) this.settled++;
+                }
+            }
+
+            // wall x
+            if (Math.abs(this.mesh.position.x) > 6.2) {
+                this.mesh.position.x = Math.sign(this.mesh.position.x) * 6.2;
+                this.vel.x *= -.45;
+            }
+            // wall z
+            if (this.mesh.position.z > 2.2)  { this.mesh.position.z =  2.2; this.vel.z *= -.4; }
+            if (this.mesh.position.z < -4.5)  { this.mesh.position.z = -4.5; this.vel.z *= -.4; }
+        }
+    }
+
+    function collide(a, b) {
+        const dx = b.mesh.position.x - a.mesh.position.x;
+        const dy = b.mesh.position.y - a.mesh.position.y;
+        const dz = b.mesh.position.z - a.mesh.position.z;
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        const min  = a.radius + b.radius;
+        if (dist >= min || dist < .001) return;
+        const ov = (min - dist) / 2;
+        const nx = dx/dist, ny = dy/dist, nz = dz/dist;
+        a.mesh.position.x -= nx*ov; a.mesh.position.y -= ny*ov; a.mesh.position.z -= nz*ov;
+        b.mesh.position.x += nx*ov; b.mesh.position.y += ny*ov; b.mesh.position.z += nz*ov;
+        const rvx = b.vel.x - a.vel.x, rvy = b.vel.y - a.vel.y, rvz = b.vel.z - a.vel.z;
+        const vn  = rvx*nx + rvy*ny + rvz*nz;
+        if (vn > 0) return;
+        const j = -(1 + Math.min(a.restitution, b.restitution)) * vn * .5;
+        a.vel.x -= j*nx; a.vel.y -= j*ny; a.vel.z -= j*nz;
+        b.vel.x += j*nx; b.vel.y += j*ny; b.vel.z += j*nz;
+        const spin = .9;
+        a.angVel.addScaledVector(new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)), spin);
+        b.angVel.addScaledVector(new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)), spin);
+        a.settled = b.settled = 0;
+    }
+
+    // ── Spawn objects ─────────────────────────
+    const defs = [
+        { fn: serumBottle,    r: .52, x: -3.2 },
+        { fn: foilPouch,      r: .60, x: -1.3 },
+        { fn: metalTube,      r: .52, x:  .6  },
+        { fn: compact,        r: .54, x:  2.3 },
+        { fn: fragranceBottle,r: .51, x:  3.8 },
+        { fn: lipstickTube,   r: .40, x: -2.1 },
+    ];
+
+    const physObjs = defs.map((d, i) => {
+        const mesh = d.fn();
+        mesh.position.set(
+            d.x + (Math.random()-.5) * 1.2,
+            10 + i * 2.2,
+            (Math.random()-.5) * 1.4
+        );
+        mesh.rotation.set(Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*Math.PI*2);
+        scene.add(mesh);
+        return new PhysObj(mesh, d.r);
+    });
+
+    // ── Mouse plane tracking ──────────────────
+    const raycaster  = new THREE.Raycaster();
+    const mouseNDC   = new THREE.Vector2();
+    const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.5);
+    let mouseTarget  = null;
+
+    document.addEventListener('mousemove', e => {
+        if (window.scrollY > H * 1.1) { mouseTarget = null; return; }
+        mouseNDC.x =  (e.clientX / W) * 2 - 1;
+        mouseNDC.y = -(e.clientY / H) * 2 + 1;
+        raycaster.setFromCamera(mouseNDC, camera);
+        const pt = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(mousePlane, pt)) mouseTarget = pt;
+    });
+
+    // ── Animate ───────────────────────────────
+    let last = performance.now();
+
+    (function tick() {
+        requestAnimationFrame(tick);
+        const now  = performance.now();
+        const dt   = Math.min((now - last) / 1000, .033);
+        last = now;
+
+        if (window.scrollY < H) {
+            const mt = (window.scrollY < H * .9) ? mouseTarget : null;
+            physObjs.forEach(o => o.update(dt, mt));
+            for (let i = 0; i < physObjs.length; i++)
+                for (let j = i+1; j < physObjs.length; j++)
+                    collide(physObjs[i], physObjs[j]);
+        }
+
+        renderer.render(scene, camera);
+    })();
+
+    // ── Resize ────────────────────────────────
+    window.addEventListener('resize', () => {
+        W = heroEl.offsetWidth; H = heroEl.offsetHeight;
+        camera.aspect = W / H;
+        camera.updateProjectionMatrix();
+        renderer.setSize(W, H);
+    });
+
+})();
+
+// ════════════════════════════════════════════
+// SCROLL FADE-IN
+// ════════════════════════════════════════════
+const obs = new IntersectionObserver(entries => {
+    entries.forEach((e, idx) => {
+        if (e.isIntersecting) {
+            setTimeout(() => e.target.classList.add('vis'), idx * 70);
+            obs.unobserve(e.target);
+        }
+    });
+}, { threshold: .12 });
+
+document.querySelectorAll('.fu').forEach(el => obs.observe(el));
+
+// ════════════════════════════════════════════
+// HEADLINE PARALLAX
+// ════════════════════════════════════════════
+const heroHl = document.getElementById('heroHl');
+document.addEventListener('mousemove', e => {
+    if (window.scrollY > window.innerHeight) return;
+    const x = (e.clientX / window.innerWidth  - .5) * 14;
+    const y = (e.clientY / window.innerHeight - .5) *  8;
+    heroHl.style.transform = `translate(${x*.4}px,${y*.4}px)`;
+});
+</script>
+</body>
+</html>
