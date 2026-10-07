@@ -842,34 +842,30 @@ const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerH
 camera.position.set(0, 0, 12);
 
 /* Lights */
-scene.add(new THREE.AmbientLight(0xf8f5f0, 0.65));
+scene.add(new THREE.AmbientLight(0xf8f5f0, 1.2));
 
-const key = new THREE.DirectionalLight(0xffffff, 2.5);
+const key = new THREE.DirectionalLight(0xffffff, 3.5);
 key.position.set(5, 8, 6);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
 scene.add(key);
 
-const fill = new THREE.DirectionalLight(0xe8e4dc, 0.75);
+const fill = new THREE.DirectionalLight(0xe8e4dc, 1.4);
 fill.position.set(-6, 2, 4);
 scene.add(fill);
 
-const rim = new THREE.DirectionalLight(0xffffff, 1.0);
+const rim = new THREE.DirectionalLight(0xffffff, 1.8);
 rim.position.set(0, -4, -8);
 scene.add(rim);
 
-scene.add(new THREE.DirectionalLight(0xfafaf8, 0.5)).position.set(0, 12, 0);
-
-/* Fake IBL */
-const pmrem  = new THREE.PMREMGenerator(renderer);
-pmrem.compileEquirectangularShader();
-scene.environment = pmrem.fromScene(new THREE.RoomEnvironment()).texture;
+const top = new THREE.DirectionalLight(0xfafaf8, 0.5);
+top.position.set(0, 12, 0);
+scene.add(top);
 
 /* ── MATERIALS ─────────────────────────────── */
 function mkMetal(hex, rough, metal) {
   return new THREE.MeshStandardMaterial({
-    color: hex, roughness: rough, metalness: metal,
-    envMapIntensity: 1.8
+    color: hex, roughness: rough, metalness: metal
   });
 }
 const matA  = mkMetal(0xcfcbc3, 0.06, 0.97);
