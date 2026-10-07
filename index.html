@@ -1,957 +1,1081 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FORM — Digital Products Studio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,wght@0,100;0,200;0,300;0,400;1,200&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAST — Digital Product Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-        :root {
-            --white:      #f5f3ef;
-            --off-white:  #edeae4;
-            --light-gray: #d4d0c8;
-            --mid-gray:   #908d86;
-            --dark-gray:  #3a3835;
-            --black:      #0e0d0b;
-            --silver:     #c4c0b8;
-        }
+:root{
+  --bg:    #f4f2ee;
+  --black: #0c0b0a;
+  --mid:   #888580;
+  --light: #ccc9c2;
+  --white: #ffffff;
+}
 
-        html { font-size: 16px; scroll-behavior: smooth; }
+html{scroll-behavior:auto}
+body{
+  background:var(--bg);
+  color:var(--black);
+  font-family:'Inter',sans-serif;
+  cursor:none;
+  overflow-x:hidden;
+}
 
-        body {
-            background: var(--white);
-            color: var(--black);
-            font-family: 'Inter', sans-serif;
-            font-weight: 200;
-            overflow-x: hidden;
-            cursor: none;
-        }
+/* ── CURSOR ─────────────────────────────────────────── */
+#cur-dot,#cur-ring{
+  position:fixed;pointer-events:none;border-radius:50%;
+  transform:translate(-50%,-50%);z-index:9999;
+  transition:opacity .3s;
+}
+#cur-dot{
+  width:6px;height:6px;
+  background:var(--black);
+}
+#cur-ring{
+  width:36px;height:36px;
+  border:1px solid rgba(12,11,10,.35);
+}
 
-        /* ── CURSOR ─────────────────────────── */
-        .cursor {
-            position: fixed;
-            width: 7px; height: 7px;
-            background: var(--black);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: width .25s, height .25s, background .25s;
-        }
-        .cursor-ring {
-            position: fixed;
-            width: 30px; height: 30px;
-            border: 1px solid rgba(14,13,11,.35);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9998;
-            transform: translate(-50%, -50%);
-            transition: width .3s, height .3s;
-        }
+/* ── CANVAS ─────────────────────────────────────────── */
+#scene{
+  position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  z-index:1;pointer-events:none;
+}
 
-        /* ── EDGE NAV ───────────────────────── */
-        .nav-edge {
-            position: fixed; top: 0; bottom: 0;
-            display: flex; align-items: center;
-            z-index: 100; pointer-events: none;
-        }
-        .nav-edge.left  { left: 18px; }
-        .nav-edge.right { right: 18px; }
-        .nav-edge-text {
-            font-family: 'Space Mono', monospace;
-            font-size: 8px; letter-spacing: .22em;
-            color: var(--light-gray); text-transform: uppercase;
-            writing-mode: vertical-rl; text-orientation: mixed;
-        }
-        .nav-edge.left .nav-edge-text { transform: rotate(180deg); }
+/* ── NAV ────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;
+  z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:28px 40px;
+}
+.nav-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;letter-spacing:.18em;
+  color:var(--black);text-decoration:none;
+}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mid);text-decoration:none;
+  transition:color .2s;
+}
+.nav-links a:hover{color:var(--black)}
 
-        /* ── TOP NAV ────────────────────────── */
-        .nav-top {
-            position: fixed; top: 0; left: 0; right: 0;
-            padding: 18px 64px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 100;
-        }
-        .nav-logo {
-            font-family: 'Space Mono', monospace; font-size: 11px;
-            font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
-            color: var(--black); text-decoration: none; pointer-events: auto;
-        }
-        .nav-links { display: flex; gap: 28px; list-style: none; pointer-events: auto; }
-        .nav-links a {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            letter-spacing: .2em; text-transform: uppercase;
-            color: var(--mid-gray); text-decoration: none;
-            transition: color .2s;
-        }
-        .nav-links a:hover { color: var(--black); }
-        .nav-counter {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            color: var(--light-gray); letter-spacing: .1em;
-        }
+/* vertical edge labels */
+.edge-label{
+  position:fixed;
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--mid);
+  z-index:100;pointer-events:none;
+  white-space:nowrap;
+}
+.edge-left{
+  left:14px;top:50%;
+  transform:translateY(-50%) rotate(-90deg);
+}
+.edge-right{
+  right:14px;top:50%;
+  transform:translateY(-50%) rotate(90deg);
+}
 
-        /* ── HERO ───────────────────────────── */
-        .hero {
-            position: relative; width: 100%; height: 100vh; overflow: hidden;
-            background: var(--white);
-        }
+/* ── HERO ZONE (scroll driver) ──────────────────────── */
+#heroZone{
+  height:600vh;
+  position:relative;
+}
 
-        /* subtle noise texture */
-        .hero::before {
-            content: '';
-            position: absolute; inset: 0; z-index: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-            pointer-events: none;
-        }
+.sticky-overlay{
+  position:sticky;top:0;
+  height:100vh;
+  z-index:5;
+  pointer-events:none;
+}
 
-        /* technical grid */
-        .hero-grid {
-            position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            background-image:
-                linear-gradient(rgba(14,13,11,.028) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(14,13,11,.028) 1px, transparent 1px);
-            background-size: 64px 64px;
-        }
+.ph-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+  pointer-events:none;
+}
+#phHero{opacity:1}
 
-        /* hairlines */
-        .hair-h, .hair-v { position: absolute; pointer-events: none; z-index: 1; }
-        .hair-h { left: 64px; right: 64px; height: 1px; background: rgba(14,13,11,.05); }
-        .hair-v { top: 0; bottom: 0; width: 1px;  background: rgba(14,13,11,.05); }
+/* ── PHASE: HERO ────────────────────────────────────── */
+.hero-content{
+  text-align:center;
+  position:relative;
+  user-select:none;
+}
+.hero-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--mid);
+  margin-bottom:24px;
+}
+.hero-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(80px,13vw,180px);
+  line-height:.92;letter-spacing:.03em;
+  color:var(--black);
+  display:block;
+}
+.hero-sub{
+  font-family:'Inter',sans-serif;
+  font-size:13px;letter-spacing:.08em;
+  color:var(--mid);
+  margin-top:28px;
+  text-transform:uppercase;
+}
 
-        #physics-canvas {
-            position: absolute; inset: 0; width: 100%; height: 100%;
-            z-index: 2; pointer-events: none;
-        }
+/* corner labels in hero */
+.corner-label{
+  position:absolute;
+  font-family:'Space Mono',monospace;
+  font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--mid);
+  pointer-events:none;
+}
+.cl-tl{top:24px;left:32px}
+.cl-tr{top:24px;right:32px;text-align:right}
+.cl-bl{bottom:24px;left:32px}
+.cl-br{bottom:24px;right:32px;text-align:right}
 
-        /* corner labels */
-        .hlabel {
-            position: absolute; font-family: 'Space Mono', monospace;
-            font-size: 7.5px; letter-spacing: .14em;
-            color: var(--light-gray); pointer-events: none; z-index: 4;
-        }
-        .hlabel.tl { top: 72px;  left:  64px; }
-        .hlabel.tr { top: 72px;  right: 64px; text-align: right; }
-        .hlabel.bl { bottom: 28px; left:  64px; }
-        .hlabel.br { bottom: 28px; right: 64px; }
+/* ── PHASE: BOLD THINKING ───────────────────────────── */
+.bold-wrap{
+  display:flex;flex-direction:column;
+  align-items:center;
+  text-align:center;
+  padding:0 40px;
+}
+.bold-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(70px,11vw,160px);
+  line-height:.9;letter-spacing:.04em;
+  color:var(--black);
+  display:block;
+}
+.bold-mirror-wrap{
+  height:.42em;overflow:hidden;
+  margin-top:.03em;
+  display:block;
+  width:100%;
+}
+.bold-mirror{
+  display:block;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(70px,11vw,160px);
+  line-height:.9;letter-spacing:.04em;
+  color:rgba(12,11,10,.08);
+  transform:scaleY(-1);
+  transform-origin:top center;
+  text-align:center;
+  pointer-events:none;
+  -webkit-mask-image:linear-gradient(to bottom,black 0%,transparent 100%);
+  mask-image:linear-gradient(to bottom,black 0%,transparent 100%);
+}
+.bold-sub{
+  font-family:'Inter',sans-serif;
+  font-size:13px;line-height:1.85;
+  color:var(--mid);
+  margin-top:32px;max-width:460px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
 
-        /* main headline */
-        .hero-hl {
-            position: absolute; bottom: 8vh; left: 0; right: 0;
-            z-index: 3; padding: 0 36px; pointer-events: none;
-        }
-        .hero-hl h1 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(72px, 13.5vw, 215px);
-            line-height: .9; letter-spacing: -.01em;
-            color: var(--black); text-transform: uppercase;
-            mix-blend-mode: multiply;
-        }
-        .hero-hl h1 .s2 { display: block; padding-left: 7vw;  }
-        .hero-hl h1 .s3 { display: block; padding-left: 14vw; }
+/* ── PHASE: CATALOG #01 ─────────────────────────────── */
+.cat-outer{
+  position:absolute;inset:24px;
+  border:1px solid var(--black);
+  pointer-events:none;
+}
+.cat-label{
+  position:absolute;
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--black);
+}
+.cat-tl{top:-1px;left:12px;transform:translateY(-50%);background:var(--bg);padding:0 6px}
+.cat-tr{top:-1px;right:12px;transform:translateY(-50%);background:var(--bg);padding:0 6px}
+.cat-bl{bottom:-1px;left:12px;transform:translateY(50%);background:var(--bg);padding:0 6px}
+.cat-br{bottom:-1px;right:12px;transform:translateY(50%);background:var(--bg);padding:0 6px}
 
-        /* floating numbers */
-        .fnum {
-            position: absolute; font-family: 'Space Mono', monospace;
-            font-size: 8px; color: var(--light-gray); letter-spacing: .1em;
-            pointer-events: none; z-index: 4;
-        }
+.cat-number{
+  position:absolute;bottom:40px;right:48px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(80px,12vw,150px);
+  line-height:1;letter-spacing:.02em;
+  color:transparent;
+  -webkit-text-stroke:1px var(--black);
+  opacity:.1;
+}
+.cat-center{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+}
+.cat-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(48px,8vw,110px);
+  line-height:.9;letter-spacing:.06em;
+  color:var(--black);
+}
+.cat-desc{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--mid);margin-top:18px;
+}
 
-        /* scroll indicator */
-        .scroll-ind {
-            position: absolute; bottom: 22px; left: 50%;
-            transform: translateX(-50%); z-index: 5;
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-        }
-        .scroll-line {
-            width: 1px; height: 36px; background: var(--black);
-            animation: pulse 2s ease-in-out infinite;
-        }
-        .scroll-label {
-            font-family: 'Space Mono', monospace; font-size: 7px;
-            letter-spacing: .2em; color: var(--mid-gray); text-transform: uppercase;
-            writing-mode: vertical-rl;
-        }
-        @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:.9} }
+/* barcode */
+.cat-barcode{
+  position:absolute;bottom:36px;left:48px;
+  opacity:.4;
+}
 
-        /* ── SUB-HEADER BAND ────────────────── */
-        .subhead {
-            padding: 36px 64px;
-            border-bottom: 1px solid var(--light-gray);
-            display: flex; justify-content: space-between; align-items: center;
-            gap: 32px;
-        }
-        .subhead h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(30px, 4.5vw, 72px); letter-spacing: .02em;
-        }
-        .subhead p {
-            font-size: 11.5px; color: var(--mid-gray); max-width: 260px;
-            font-weight: 300; line-height: 1.75; text-align: right;
-        }
+/* ── PHASE: MOTION IS A MUST ────────────────────────── */
+.motion-wrap{
+  text-align:center;
+  padding:0 40px;
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100%;
+}
+.motion-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--mid);margin-bottom:20px;
+}
+.motion-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(68px,11vw,158px);
+  line-height:.9;letter-spacing:.04em;
+  color:var(--black);
+}
 
-        /* ── MARQUEE ─────────────────────────── */
-        .marquee-wrap {
-            padding: 22px 0; overflow: hidden;
-            border-bottom: 1px solid var(--light-gray);
-        }
-        .marquee-track {
-            display: flex; gap: 64px; white-space: nowrap;
-            animation: marquee 22s linear infinite;
-        }
-        .marquee-track span {
-            font-family: 'Bebas Neue', sans-serif; font-size: 17px;
-            letter-spacing: .12em; color: var(--light-gray); flex-shrink: 0;
-        }
-        .marquee-track em { color: var(--mid-gray); font-style: normal; }
-        @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+/* ── POST-HERO SECTIONS ─────────────────────────────── */
+.post-hero{
+  position:relative;
+  z-index:2;
+  background:var(--bg);
+}
 
-        /* ── SECTIONS ───────────────────────── */
-        .section { padding: 112px 64px; position: relative; }
+/* BREAK THE FRAME */
+.break-section{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  padding:120px 60px;
+  border-top:1px solid var(--light);
+  opacity:0;transform:translateY(40px);
+  transition:opacity .9s ease,transform .9s ease;
+}
+.break-section.visible{opacity:1;transform:none}
 
-        .section-label {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            letter-spacing: .25em; text-transform: uppercase;
-            color: var(--mid-gray); margin-bottom: 56px;
-            display: flex; align-items: center; gap: 14px;
-        }
-        .section-label::before {
-            content: ''; display: block; width: 20px; height: 1px; background: var(--mid-gray);
-        }
-        .section-label .n { color: var(--light-gray); }
+.break-kicker{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--mid);margin-bottom:32px;
+}
+.break-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(80px,14vw,210px);
+  line-height:.88;letter-spacing:.02em;
+  color:var(--black);
+  text-align:center;
+}
+.break-rule{
+  width:1px;height:80px;
+  background:var(--light);
+  margin:56px auto;
+}
+.break-body{
+  font-family:'Inter',sans-serif;
+  font-size:15px;line-height:1.75;
+  color:var(--mid);
+  max-width:460px;text-align:center;
+}
 
-        /* ── SERVICES ───────────────────────── */
-        .services-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            border-top: 1px solid var(--light-gray);
-        }
-        .sv-item {
-            padding: 44px 28px 44px 0;
-            border-right: 1px solid var(--light-gray);
-            border-bottom: 1px solid var(--light-gray);
-        }
-        .sv-item:nth-child(3n) { border-right: none; }
-        .sv-num {
-            font-family: 'Space Mono', monospace; font-size: 7.5px;
-            color: var(--light-gray); margin-bottom: 28px; letter-spacing: .1em;
-        }
-        .sv-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(28px, 3vw, 52px);
-            line-height: 1; color: var(--black); margin-bottom: 18px;
-            letter-spacing: .02em;
-        }
-        .sv-desc {
-            font-size: 11.5px; line-height: 1.75; color: var(--mid-gray);
-            font-weight: 300; max-width: 260px;
-        }
+/* ME APRÈS PARIS */
+.apres-section{
+  min-height:100vh;
+  background:var(--black);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  opacity:0;transform:translateY(40px);
+  transition:opacity .9s ease,transform .9s ease;
+}
+.apres-section.visible{opacity:1;transform:none}
 
-        /* ── WORK ───────────────────────────── */
-        .work-section { padding: 80px 0; overflow: hidden; }
-        .work-header {
-            padding: 0 64px 56px;
-            display: flex; justify-content: space-between; align-items: flex-end;
-        }
-        .work-hl {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(56px, 8vw, 116px); line-height: 1; color: var(--black);
-        }
-        .work-meta {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            color: var(--mid-gray); letter-spacing: .15em; text-transform: uppercase;
-        }
-        .work-list { border-top: 1px solid var(--light-gray); }
-        .wi {
-            display: grid; grid-template-columns: 72px 1fr auto 140px;
-            align-items: center; gap: 28px;
-            padding: 24px 64px;
-            border-bottom: 1px solid var(--light-gray);
-            transition: background .3s; cursor: none;
-        }
-        .wi:hover { background: var(--off-white); }
-        .wi-num {
-            font-family: 'Space Mono', monospace; font-size: 9px;
-            color: var(--light-gray); letter-spacing: .1em;
-        }
-        .wi-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(24px, 2.8vw, 44px);
-            color: var(--black); letter-spacing: .02em;
-            transition: transform .4s cubic-bezier(.23,1,.32,1);
-        }
-        .wi:hover .wi-title { transform: translateX(14px); }
-        .wi-tags { display: flex; gap: 6px; }
-        .tag {
-            font-family: 'Space Mono', monospace; font-size: 7.5px;
-            letter-spacing: .15em; text-transform: uppercase;
-            color: var(--mid-gray); padding: 3px 8px;
-            border: 1px solid var(--light-gray);
-        }
-        .wi-year {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            color: var(--light-gray); text-align: right; letter-spacing: .1em;
-        }
+.apres-image{
+  position:relative;
+  overflow:hidden;
+  min-height:560px;
+}
+.apres-img-fill{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,#1a1916 0%,#0c0b0a 40%,#2a2825 70%,#0e0d0b 100%);
+}
+.apres-img-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to right,transparent 60%,var(--black) 100%);
+}
+.apres-grain{
+  position:absolute;inset:0;
+  opacity:.3;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E");
+}
+.apres-label{
+  position:absolute;bottom:32px;left:32px;
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+}
 
-        /* ── MANIFESTO ──────────────────────── */
-        .manifesto {
-            padding: 140px 64px;
-            display: flex; justify-content: flex-end;
-        }
-        .mani-inner { max-width: 700px; }
-        .mani-quote {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(44px, 5.5vw, 90px);
-            line-height: 1.06; color: var(--black); margin-bottom: 36px;
-        }
-        .mani-body {
-            font-size: 12px; line-height: 1.85; color: var(--mid-gray);
-            font-weight: 300; columns: 2; column-gap: 36px;
-        }
+.apres-copy{
+  padding:80px 72px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.apres-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+  margin-bottom:40px;
+}
+.apres-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(52px,7vw,100px);
+  line-height:.9;letter-spacing:.04em;
+  color:var(--white);
+  margin-bottom:40px;
+}
+.apres-body{
+  font-family:'Inter',sans-serif;
+  font-size:14px;line-height:1.85;
+  color:rgba(255,255,255,.5);
+  max-width:380px;
+  margin-bottom:56px;
+}
+.apres-detail-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:24px;border-top:1px solid rgba(255,255,255,.07);
+  padding-top:32px;
+  max-width:380px;
+}
+.apres-detail-label{
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.22);
+  margin-bottom:6px;
+}
+.apres-detail-val{
+  font-family:'Inter',sans-serif;
+  font-size:13px;color:rgba(255,255,255,.65);
+}
 
-        /* ── PROCESS ─────────────────────────── */
-        .process-section {
-            padding: 80px 64px 140px;
-            border-top: 1px solid var(--light-gray);
-        }
-        .steps { display: flex; gap: 0; margin-top: 56px; }
-        .step {
-            flex: 1; padding: 40px 28px 40px 0;
-            border-right: 1px solid var(--light-gray);
-        }
-        .step:first-child { padding-left: 0; }
-        .step:last-child  { border-right: none; }
-        .step + .step { padding-left: 28px; }
-        .step-n {
-            font-family: 'Space Mono', monospace; font-size: 38px;
-            font-weight: 700; color: var(--off-white);
-            line-height: 1; margin-bottom: 20px; letter-spacing: -.02em;
-        }
-        .step-t {
-            font-family: 'Bebas Neue', sans-serif; font-size: 30px;
-            color: var(--black); margin-bottom: 14px; letter-spacing: .02em;
-        }
-        .step-d { font-size: 11.5px; line-height: 1.75; color: var(--mid-gray); font-weight: 300; }
+/* SERVICES GRID */
+.services-section{
+  padding:120px 60px;
+  border-top:1px solid var(--light);
+  opacity:0;transform:translateY(40px);
+  transition:opacity .9s ease,transform .9s ease;
+}
+.services-section.visible{opacity:1;transform:none}
 
-        /* ── STATS BAND ─────────────────────── */
-        .stats {
-            padding: 64px; background: var(--off-white);
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            border-top: 1px solid var(--light-gray);
-            border-bottom: 1px solid var(--light-gray);
-        }
-        .stat {
-            padding: 0 28px 0 0;
-            border-right: 1px solid var(--light-gray);
-        }
-        .stat:last-child { border-right: none; padding-left: 28px; padding-right: 0; }
-        .stat + .stat { padding-left: 28px; }
-        .stat-num {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(48px, 5vw, 80px); line-height: 1;
-            color: var(--black); letter-spacing: .01em;
-        }
-        .stat-label {
-            font-family: 'Space Mono', monospace; font-size: 8px;
-            letter-spacing: .2em; text-transform: uppercase;
-            color: var(--mid-gray); margin-top: 8px;
-        }
+.services-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:80px;
+}
+.services-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(48px,7vw,96px);
+  line-height:.9;letter-spacing:.04em;
+  color:var(--black);
+}
+.services-count{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.2em;
+  color:var(--mid);
+}
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--light);
+}
+.service-card{
+  padding:40px 36px;
+  border-right:1px solid var(--light);
+}
+.service-card:last-child{border-right:none}
+.service-num{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.18em;
+  color:var(--light);
+  margin-bottom:28px;
+  display:block;
+}
+.service-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:.08em;
+  color:var(--black);
+  margin-bottom:16px;
+  display:block;
+}
+.service-desc{
+  font-family:'Inter',sans-serif;
+  font-size:13px;line-height:1.75;
+  color:var(--mid);
+}
 
-        /* ── FOOTER ─────────────────────────── */
-        .footer {
-            background: var(--black); color: var(--silver); padding: 72px 64px;
-        }
-        .footer-top {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            margin-bottom: 72px; padding-bottom: 72px;
-            border-bottom: 1px solid rgba(196,192,184,.15);
-        }
-        .foot-hl {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(56px, 7.5vw, 112px); line-height: .92; color: var(--white);
-        }
-        .footer-right {
-            display: flex; flex-direction: column; align-items: flex-end;
-            gap: 18px; padding-top: 12px;
-        }
-        .cta-btn {
-            display: inline-flex; align-items: center; gap: 14px;
-            padding: 14px 28px;
-            border: 1px solid var(--silver); color: var(--white);
-            font-family: 'Space Mono', monospace; font-size: 9px;
-            letter-spacing: .2em; text-transform: uppercase;
-            text-decoration: none; transition: all .3s; cursor: none;
-        }
-        .cta-btn:hover { background: var(--white); color: var(--black); }
-        .foot-email {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            letter-spacing: .15em; color: rgba(196,192,184,.45);
-        }
-        .footer-bottom {
-            display: flex; justify-content: space-between; align-items: flex-end;
-        }
-        .foot-copy {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            letter-spacing: .15em; color: rgba(196,192,184,.35);
-        }
-        .foot-nav { display: flex; gap: 28px; }
-        .foot-nav a {
-            font-family: 'Space Mono', monospace; font-size: 8.5px;
-            letter-spacing: .15em; text-transform: uppercase;
-            color: rgba(196,192,184,.35); text-decoration: none; transition: color .2s;
-        }
-        .foot-nav a:hover { color: var(--white); }
+/* INTERACTIVE VIDEO */
+.video-section{
+  min-height:100vh;
+  background:var(--black);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  padding:80px 60px;
+  opacity:0;transform:translateY(40px);
+  transition:opacity .9s ease,transform .9s ease;
+}
+.video-section.visible{opacity:1;transform:none}
 
-        /* ── FADE UP ─────────────────────────── */
-        .fu { opacity: 0; transform: translateY(28px); transition: opacity .85s ease, transform .85s ease; }
-        .fu.vis { opacity: 1; transform: none; }
+.video-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+  margin-bottom:40px;
+}
+.video-frame{
+  position:relative;
+  width:100%;max-width:1100px;
+  aspect-ratio:16/9;
+  border:1px solid rgba(255,255,255,.08);
+  cursor:none;
+  overflow:hidden;
+  background:linear-gradient(160deg,#111010 0%,#0a0909 40%,#1c1b19 100%);
+}
+.video-inner-label{
+  position:absolute;top:24px;left:28px;
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(255,255,255,.18);
+}
+.video-inner-num{
+  position:absolute;bottom:24px;right:28px;
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.18em;
+  color:rgba(255,255,255,.18);
+}
+.video-hover-bg{
+  position:absolute;inset:0;
+  background:rgba(10,9,9,0);
+  transition:background .4s;
+  pointer-events:none;
+}
+.video-frame:hover .video-hover-bg{
+  background:rgba(10,9,9,.15);
+}
+.video-play{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;
+  width:72px;height:72px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:50%;
+  transition:border-color .3s,transform .3s;
+}
+.video-play svg{
+  width:18px;height:18px;
+  fill:rgba(255,255,255,.65);
+  margin-left:3px;
+  transition:fill .3s;
+}
+.video-frame:hover .video-play{
+  border-color:rgba(255,255,255,.65);
+  transform:translate(-50%,-50%) scale(1.06);
+}
+.video-frame:hover .video-play svg{fill:var(--white)}
 
-        /* ── RESPONSIVE ─────────────────────── */
-        @media (max-width: 768px) {
-            .nav-edge { display: none; }
-            .nav-top, .subhead, .section, .process-section, .footer { padding-left: 20px; padding-right: 20px; }
-            .services-grid { grid-template-columns: 1fr; }
-            .sv-item { border-right: none; }
-            .wi { grid-template-columns: 40px 1fr; }
-            .wi-tags, .wi-year { display: none; }
-            .work-header { padding: 0 20px 40px; }
-            .manifesto { padding: 80px 20px; }
-            .mani-body { columns: 1; }
-            .steps { flex-direction: column; }
-            .step { border-right: none; border-bottom: 1px solid var(--light-gray); }
-            .stats { grid-template-columns: repeat(2, 1fr); row-gap: 40px; }
-            .stat { border-right: none; }
-            .hlabel { display: none; }
-            .footer-top { flex-direction: column; gap: 40px; }
-        }
-    </style>
+.video-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(32px,5vw,64px);
+  letter-spacing:.08em;
+  color:var(--white);
+  margin-top:48px;
+  text-align:center;
+}
+.video-sub{
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.28);
+  margin-top:16px;
+}
+
+/* FOOTER / CTA */
+footer{
+  background:var(--black);
+  padding:120px 60px 80px;
+  position:relative;
+  overflow:hidden;
+  opacity:0;transform:translateY(40px);
+  transition:opacity .9s ease,transform .9s ease;
+}
+footer.visible{opacity:1;transform:none}
+
+.footer-bg-text{
+  position:absolute;
+  bottom:-0.1em;left:-0.02em;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(120px,18vw,260px);
+  line-height:1;letter-spacing:.01em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,.04);
+  pointer-events:none;user-select:none;
+  white-space:nowrap;
+}
+.footer-inner{
+  position:relative;
+  display:flex;justify-content:space-between;
+  align-items:flex-end;
+  gap:60px;
+}
+.footer-cta-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(52px,8vw,115px);
+  line-height:.9;letter-spacing:.04em;
+  color:var(--white);
+  max-width:700px;
+}
+.footer-right{
+  display:flex;flex-direction:column;
+  align-items:flex-end;gap:28px;
+  flex-shrink:0;
+}
+.footer-email{
+  font-family:'Inter',sans-serif;
+  font-size:13px;letter-spacing:.06em;
+  color:rgba(255,255,255,.4);
+  text-decoration:none;
+  transition:color .2s;
+}
+.footer-email:hover{color:var(--white)}
+.footer-btn{
+  display:inline-block;
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--black);background:var(--white);
+  padding:14px 28px;
+  text-decoration:none;
+  transition:background .2s;
+  cursor:none;
+}
+.footer-btn:hover{background:rgba(255,255,255,.85)}
+
+.footer-base{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:80px;
+  padding-top:28px;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.footer-base-copy{
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.18);
+}
+</style>
 </head>
 <body>
 
-<!-- CURSOR -->
-<div class="cursor"  id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+<!-- Cursors -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
 
-<!-- EDGE NAV -->
-<div class="nav-edge left"><span class="nav-edge-text">AUTHENTIC DIGITAL PRODUCTS</span></div>
-<div class="nav-edge right"><span class="nav-edge-text">SERVICE STORE</span></div>
+<!-- Canvas -->
+<canvas id="scene"></canvas>
 
-<!-- TOP NAV -->
-<nav class="nav-top">
-    <a href="#" class="nav-logo">FORM</a>
-    <ul class="nav-links">
-        <li><a href="#work">Work</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#contact">Contact</a></li>
-    </ul>
-    <span class="nav-counter">2024 — 001</span>
+<!-- Navigation -->
+<nav>
+  <a href="#" class="nav-logo">CAST</a>
+  <div class="nav-links">
+    <a href="#">Work</a>
+    <a href="#">Studio</a>
+    <a href="#">Services</a>
+    <a href="#">Contact</a>
+  </div>
 </nav>
 
-<!-- ══ HERO ══════════════════════════════ -->
-<section class="hero" id="hero">
-    <div class="hero-grid"></div>
-    <div class="hair-h" style="top:50%"></div>
-    <div class="hair-v" style="left:50%"></div>
+<span class="edge-label edge-left">AUTHENTIC DIGITAL PRODUCTS</span>
+<span class="edge-label edge-right">SERVICE STORE</span>
 
-    <canvas id="physics-canvas"></canvas>
+<!-- ══════════════════════════════════════════════
+     HERO ZONE — 600vh scroll driver
+══════════════════════════════════════════════ -->
+<div id="heroZone">
+  <div class="sticky-overlay">
 
-    <span class="hlabel tl">LAT 40.712 / LON −74.005</span>
-    <span class="hlabel tr">STUDIO — INDEX : 001</span>
-    <span class="hlabel bl">© FORM STUDIO 2024</span>
-    <span class="hlabel br">PROJECTS — ONGOING</span>
-
-    <span class="fnum" style="top:40%;right:64px">031</span>
-    <span class="fnum" style="top:22%;left:64px">——</span>
-    <span class="fnum" style="top:65%;left:64px">COLLECTION I</span>
-
-    <div class="hero-hl" id="heroHl">
-        <h1>DIGITAL<span class="s2">PRODUCTS</span><span class="s3">FOR</span></h1>
+    <!-- PHASE 01: HERO -->
+    <div class="ph-overlay" id="phHero">
+      <span class="corner-label cl-tl">AUTHENTIC DIGITAL PRODUCTS</span>
+      <span class="corner-label cl-tr">SERVICE STORE</span>
+      <span class="corner-label cl-bl">EST. 2024 — DIGITAL PRODUCT STUDIO</span>
+      <span class="corner-label cl-br">01 / 05</span>
+      <div class="hero-content">
+        <div class="hero-eyebrow">Digital Product Studio — 2024</div>
+        <span class="hero-headline">CAST</span>
+        <div class="hero-sub">Scroll to explore the collection</div>
+      </div>
     </div>
 
-    <div class="scroll-ind">
-        <span class="scroll-label">Scroll</span>
-        <div class="scroll-line"></div>
+    <!-- PHASE 02: BOLD THINKING -->
+    <div class="ph-overlay" id="phBold">
+      <div class="bold-wrap">
+        <span class="bold-headline">BOLD</span>
+        <span class="bold-headline">THINKING</span>
+        <div class="bold-mirror-wrap">
+          <span class="bold-mirror">BOLD THINKING</span>
+        </div>
+        <p class="bold-sub">Ideas that reshape the digital landscape — products built with intent, launched with precision.</p>
+      </div>
     </div>
-</section>
 
-<!-- SUB-HEADER -->
-<div class="subhead">
-    <h2>CONTEMPORARY BRANDS</h2>
-    <p>We craft digital product experiences at the intersection of luxury design and technical precision. Form follows function. Function becomes art.</p>
+    <!-- PHASE 03: CATALOG #01 -->
+    <div class="ph-overlay" id="phCatalog">
+      <div class="cat-outer">
+        <span class="cat-label cat-tl">AUTHENTIC DIGITAL PRODUCTS</span>
+        <span class="cat-label cat-tr">SERVICE STORE</span>
+        <span class="cat-label cat-bl">DIGITAL PRODUCT STUDIO</span>
+        <span class="cat-label cat-br">01 / 05</span>
+        <div class="cat-number">#01</div>
+        <div class="cat-center">
+          <div class="cat-title">THE<br>COLLECTION</div>
+          <div class="cat-desc">Selected works — 2023–2024</div>
+        </div>
+        <svg class="cat-barcode" width="72" height="36" viewBox="0 0 72 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0"  y="0" width="3" height="36" fill="#0c0b0a"/>
+          <rect x="5"  y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="8"  y="0" width="2" height="36" fill="#0c0b0a"/>
+          <rect x="12" y="0" width="3" height="36" fill="#0c0b0a"/>
+          <rect x="17" y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="20" y="0" width="2" height="36" fill="#0c0b0a"/>
+          <rect x="24" y="0" width="4" height="36" fill="#0c0b0a"/>
+          <rect x="30" y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="33" y="0" width="3" height="36" fill="#0c0b0a"/>
+          <rect x="38" y="0" width="2" height="36" fill="#0c0b0a"/>
+          <rect x="42" y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="45" y="0" width="4" height="36" fill="#0c0b0a"/>
+          <rect x="51" y="0" width="2" height="36" fill="#0c0b0a"/>
+          <rect x="55" y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="58" y="0" width="3" height="36" fill="#0c0b0a"/>
+          <rect x="63" y="0" width="1" height="36" fill="#0c0b0a"/>
+          <rect x="66" y="0" width="2" height="36" fill="#0c0b0a"/>
+          <rect x="70" y="0" width="2" height="36" fill="#0c0b0a"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- PHASE 04: MOTION IS A MUST -->
+    <div class="ph-overlay" id="phMotion">
+      <div class="motion-wrap">
+        <div class="motion-eyebrow">Principle 03 — Movement</div>
+        <div class="motion-headline">MOTION<br>IS A MUST</div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<!-- MARQUEE -->
-<div class="marquee-wrap">
-    <div class="marquee-track" id="mqTrack">
-        <span>BRAND IDENTITY <em>●</em></span>
-        <span>WEB EXPERIENCE <em>●</em></span>
-        <span>DIGITAL PRODUCTS <em>●</em></span>
-        <span>MOTION DESIGN <em>●</em></span>
-        <span>CREATIVE DIRECTION <em>●</em></span>
-        <span>3D &amp; IMMERSIVE <em>●</em></span>
-        <span>BRAND IDENTITY <em>●</em></span>
-        <span>WEB EXPERIENCE <em>●</em></span>
-        <span>DIGITAL PRODUCTS <em>●</em></span>
-        <span>MOTION DESIGN <em>●</em></span>
-        <span>CREATIVE DIRECTION <em>●</em></span>
-        <span>3D &amp; IMMERSIVE <em>●</em></span>
-    </div>
-</div>
 
-<!-- ══ SERVICES ═══════════════════════════ -->
-<section class="section" id="services">
-    <div class="section-label"><span class="n">01</span> Services</div>
-    <div class="services-grid">
-        <div class="sv-item fu">
-            <div class="sv-num">01 — STRATEGY</div>
-            <div class="sv-title">Brand<br>Strategy</div>
-            <p class="sv-desc">Positioning, identity systems, and competitive landscapes built for markets that don't stand still.</p>
-        </div>
-        <div class="sv-item fu">
-            <div class="sv-num">02 — DESIGN</div>
-            <div class="sv-title">Digital<br>Design</div>
-            <p class="sv-desc">Interface design that performs at the luxury tier — meticulous, functional, unforgettable.</p>
-        </div>
-        <div class="sv-item fu">
-            <div class="sv-num">03 — BUILD</div>
-            <div class="sv-title">Product<br>Engineering</div>
-            <p class="sv-desc">From concept to deployment. We build with precision, at speed, without compromise.</p>
-        </div>
-        <div class="sv-item fu">
-            <div class="sv-num">04 — MOTION</div>
-            <div class="sv-title">Motion &amp;<br>3D</div>
-            <p class="sv-desc">Cinematic motion and real-time 3D that transforms how brands communicate in every medium.</p>
-        </div>
-        <div class="sv-item fu">
-            <div class="sv-num">05 — CONTENT</div>
-            <div class="sv-title">Creative<br>Production</div>
-            <p class="sv-desc">Photography, video, editorial — content made for the feed and far beyond it.</p>
-        </div>
-        <div class="sv-item fu">
-            <div class="sv-num">06 — SYSTEMS</div>
-            <div class="sv-title">Design<br>Systems</div>
-            <p class="sv-desc">Scalable design infrastructure that grows with your brand, not against it.</p>
-        </div>
-    </div>
+<!-- ══════════════════════════════════════════════
+     POST-HERO SECTIONS
+══════════════════════════════════════════════ -->
+
+<!-- BREAK THE FRAME -->
+<section class="post-hero break-section" id="breakSection">
+  <div class="break-kicker">Chapter 01 — Manifesto</div>
+  <div class="break-headline">BREAK<br>THE<br>FRAME.</div>
+  <div class="break-rule"></div>
+  <p class="break-body">We don't ship products that fit inside existing molds. Every project starts with the question: what would this look like if it had never been done before?</p>
 </section>
 
-<!-- ══ STATS ════════════════════════════ -->
-<div class="stats">
-    <div class="stat fu"><div class="stat-num">87+</div><div class="stat-label">Projects Delivered</div></div>
-    <div class="stat fu"><div class="stat-num">12</div><div class="stat-label">Years Combined</div></div>
-    <div class="stat fu"><div class="stat-num">40+</div><div class="stat-label">Brand Partners</div></div>
-    <div class="stat fu"><div class="stat-num">03</div><div class="stat-label">Continents</div></div>
-</div>
-
-<!-- ══ SELECTED WORK ══════════════════════ -->
-<section class="work-section" id="work">
-    <div class="work-header">
-        <h2 class="work-hl fu">Selected<br>Work</h2>
-        <span class="work-meta fu">06 Projects — 2022–2024</span>
+<!-- ME APRÈS PARIS -->
+<section class="post-hero apres-section" id="apresSection">
+  <div class="apres-image">
+    <div class="apres-img-fill"></div>
+    <div class="apres-img-overlay"></div>
+    <div class="apres-grain"></div>
+    <span class="apres-label">EDITORIAL — SS24</span>
+  </div>
+  <div class="apres-copy">
+    <div class="apres-eyebrow">Chapter 02 — Editorial Direction</div>
+    <div class="apres-headline">ME<br>APRÈS<br>PARIS</div>
+    <p class="apres-body">Digital products conceived in the aesthetic register of high fashion. Sparse. Considered. Irreducibly confident.</p>
+    <div class="apres-detail-grid">
+      <div>
+        <div class="apres-detail-label">Discipline</div>
+        <div class="apres-detail-val">Product Design</div>
+      </div>
+      <div>
+        <div class="apres-detail-label">Year</div>
+        <div class="apres-detail-val">2024</div>
+      </div>
+      <div>
+        <div class="apres-detail-label">Direction</div>
+        <div class="apres-detail-val">Editorial</div>
+      </div>
+      <div>
+        <div class="apres-detail-label">Client</div>
+        <div class="apres-detail-val">Undisclosed</div>
+      </div>
     </div>
-    <div class="work-list">
-        <div class="wi fu"><span class="wi-num">001</span><span class="wi-title">AURORA COSMETICS</span><div class="wi-tags"><span class="tag">Identity</span><span class="tag">Web</span></div><span class="wi-year">2024</span></div>
-        <div class="wi fu"><span class="wi-num">002</span><span class="wi-title">VESSEL SPIRITS</span><div class="wi-tags"><span class="tag">3D</span><span class="tag">Motion</span></div><span class="wi-year">2024</span></div>
-        <div class="wi fu"><span class="wi-num">003</span><span class="wi-title">MERIDIAN LABS</span><div class="wi-tags"><span class="tag">Product</span><span class="tag">Systems</span></div><span class="wi-year">2023</span></div>
-        <div class="wi fu"><span class="wi-num">004</span><span class="wi-title">CÔTE PARFUM</span><div class="wi-tags"><span class="tag">Identity</span><span class="tag">Content</span></div><span class="wi-year">2023</span></div>
-        <div class="wi fu"><span class="wi-num">005</span><span class="wi-title">ARCHFORM STUDIO</span><div class="wi-tags"><span class="tag">Web</span><span class="tag">Build</span></div><span class="wi-year">2023</span></div>
-        <div class="wi fu"><span class="wi-num">006</span><span class="wi-title">THE MINERAL EDIT</span><div class="wi-tags"><span class="tag">Strategy</span><span class="tag">Identity</span></div><span class="wi-year">2022</span></div>
-    </div>
+  </div>
 </section>
 
-<!-- ══ MANIFESTO ════════════════════════ -->
-<section class="manifesto">
-    <div class="mani-inner">
-        <div class="mani-quote fu">"We believe the best<br>digital products feel<br>inevitable."</div>
-        <div class="mani-body fu">
-            <p>Every pixel, interaction, and second of load time is a statement. We build for brands that understand this — that choose exactness over convenience, craft over templates, permanence over trend.</p>
-            <p>Our work lives at the intersection of editorial luxury and technical precision. We don't follow digital culture. We help define it.</p>
-        </div>
+<!-- SERVICES -->
+<section class="post-hero services-section" id="servicesSection">
+  <div class="services-header">
+    <div class="services-headline">WHAT<br>WE MAKE</div>
+    <div class="services-count">03 DISCIPLINES</div>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <span class="service-num">01</span>
+      <span class="service-name">PRODUCT</span>
+      <p class="service-desc">End-to-end digital product design and development. From concept to launch, we build systems that scale.</p>
     </div>
+    <div class="service-card">
+      <span class="service-num">02</span>
+      <span class="service-name">IDENTITY</span>
+      <p class="service-desc">Brand systems for digital-first companies. Visual languages built to hold weight across every medium.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-num">03</span>
+      <span class="service-name">MOTION</span>
+      <p class="service-desc">Interface motion, campaign direction, 3D product visualization. Kinetics that communicate.</p>
+    </div>
+  </div>
 </section>
 
-<!-- ══ PROCESS ══════════════════════════ -->
-<section class="process-section" id="process">
-    <div class="section-label"><span class="n">03</span> Process</div>
-    <div class="steps">
-        <div class="step fu"><div class="step-n">01</div><div class="step-t">Discover</div><p class="step-d">Deep research into your market, competitors, and brand equity. We map the terrain before we move.</p></div>
-        <div class="step fu"><div class="step-n">02</div><div class="step-t">Define</div><p class="step-d">Strategy, architecture, and creative direction. The blueprint for everything that follows.</p></div>
-        <div class="step fu"><div class="step-n">03</div><div class="step-t">Design</div><p class="step-d">From wireframes to high-fidelity. Iterative, collaborative, relentlessly refined.</p></div>
-        <div class="step fu"><div class="step-n">04</div><div class="step-t">Deploy</div><p class="step-d">Engineering, testing, and launch. We ship products that perform as beautifully as they look.</p></div>
+<!-- INTERACTIVE VIDEO -->
+<section class="post-hero video-section" id="videoSection">
+  <div class="video-eyebrow">Showreel — 2024</div>
+  <div class="video-frame" id="videoFrame">
+    <div class="video-inner-label">CAST — SELECTED WORKS</div>
+    <div class="video-inner-num">2024 / HD</div>
+    <div class="video-hover-bg"></div>
+    <div class="video-play">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </div>
+  </div>
+  <div class="video-title">SHOWREEL 2024</div>
+  <div class="video-sub">Selected works — digital product studio</div>
 </section>
 
-<!-- ══ FOOTER ════════════════════════════ -->
-<footer class="footer" id="contact">
-    <div class="footer-top">
-        <div class="foot-hl">LET'S<br>BUILD<br>SOMETHING.</div>
-        <div class="footer-right">
-            <a href="mailto:hello@form.studio" class="cta-btn">START A PROJECT →</a>
-            <span class="foot-email">hello@form.studio</span>
-        </div>
+<!-- FOOTER -->
+<footer class="post-hero" id="footerSection">
+  <div class="footer-bg-text">CAST</div>
+  <div class="footer-inner">
+    <div class="footer-cta-headline">LET'S BUILD<br>SOMETHING<br>REAL.</div>
+    <div class="footer-right">
+      <a href="mailto:hello@cast.studio" class="footer-email">hello@cast.studio</a>
+      <a href="#" class="footer-btn">Start a project</a>
     </div>
-    <div class="footer-bottom">
-        <span class="foot-copy">FORM STUDIO · NEW YORK · 2024</span>
-        <nav class="foot-nav">
-            <a href="#">Instagram</a>
-            <a href="#">LinkedIn</a>
-            <a href="#">Are.na</a>
-            <a href="#">Privacy</a>
-        </nav>
-    </div>
+  </div>
+  <div class="footer-base">
+    <span class="footer-base-copy">© 2024 CAST — Digital Product Studio</span>
+    <span class="footer-base-copy">All rights reserved</span>
+  </div>
 </footer>
 
+<!-- Three.js r128 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script>
-// ════════════════════════════════════════════
-// CURSOR
-// ════════════════════════════════════════════
-const cursor     = document.getElementById('cursor');
-const cursorRing = document.getElementById('cursorRing');
-let mx = 0, my = 0, rx = 0, ry = 0;
+/* ══════════════════════════════════════════════
+   CURSOR
+══════════════════════════════════════════════ */
+const dot  = document.getElementById('cur-dot');
+const ring = document.getElementById('cur-ring');
+let mx = window.innerWidth/2, my = window.innerHeight/2;
+let rx = mx, ry = my;
 
 document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 
-(function tickCursor() {
-    rx += (mx - rx) * .13;
-    ry += (my - ry) * .13;
-    cursor.style.left     = mx + 'px';
-    cursor.style.top      = my + 'px';
-    cursorRing.style.left = rx + 'px';
-    cursorRing.style.top  = ry + 'px';
-    requestAnimationFrame(tickCursor);
-})();
+function animCursor() {
+  dot.style.left  = mx + 'px';
+  dot.style.top   = my + 'px';
+  rx += (mx - rx) * 0.1;
+  ry += (my - ry) * 0.1;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
 
-document.querySelectorAll('a,button,.wi,.cta-btn').forEach(el => {
-    el.addEventListener('mouseenter', () => { cursor.style.width = cursor.style.height = '14px'; cursorRing.style.width = cursorRing.style.height = '44px'; });
-    el.addEventListener('mouseleave', () => { cursor.style.width = cursor.style.height = '7px';  cursorRing.style.width = cursorRing.style.height = '30px'; });
+/* ══════════════════════════════════════════════
+   THREE.JS SCENE
+══════════════════════════════════════════════ */
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('scene'),
+  antialias: true,
+  alpha: true
+});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.setClearColor(0x000000, 0);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 12);
+
+/* Lights */
+scene.add(new THREE.AmbientLight(0xf8f5f0, 0.65));
+
+const key = new THREE.DirectionalLight(0xffffff, 2.5);
+key.position.set(5, 8, 6);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xe8e4dc, 0.75);
+fill.position.set(-6, 2, 4);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0xffffff, 1.0);
+rim.position.set(0, -4, -8);
+scene.add(rim);
+
+scene.add(new THREE.DirectionalLight(0xfafaf8, 0.5)).position.set(0, 12, 0);
+
+/* Fake IBL */
+const pmrem  = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+scene.environment = pmrem.fromScene(new THREE.RoomEnvironment()).texture;
+
+/* ── MATERIALS ─────────────────────────────── */
+function mkMetal(hex, rough, metal) {
+  return new THREE.MeshStandardMaterial({
+    color: hex, roughness: rough, metalness: metal,
+    envMapIntensity: 1.8
+  });
+}
+const matA  = mkMetal(0xcfcbc3, 0.06, 0.97);
+const matB  = mkMetal(0xb8b4ac, 0.12, 0.90);
+const matC  = mkMetal(0xdedcd7, 0.08, 0.94);
+const matDk = mkMetal(0x1a1917, 0.18, 0.82);
+const matLb = mkMetal(0x0e0e0d, 0.38, 0.40);
+const matBg = new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.85, metalness: 0.0 });
+
+/* ── FOIL POUCH ─────────────────────────────── */
+function createFoilPouch(mat) {
+  const g = new THREE.Group();
+
+  // Body with slight pillow effect
+  const bg = new THREE.BoxGeometry(1.1, 1.6, 0.32, 4, 8, 2);
+  const p  = bg.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const bz = p.getZ(i);
+    const bulge = (1 - Math.abs(p.getX(i) / 0.55)) * (1 - Math.abs(p.getY(i) / 0.8)) * 0.11;
+    p.setZ(i, bz + (bz > 0 ? bulge : -bulge));
+  }
+  p.needsUpdate = true; bg.computeVertexNormals();
+  g.add(new THREE.Mesh(bg, mat));
+
+  // Seals
+  const ts = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.13, 0.19), matA);
+  ts.position.y = 0.87; g.add(ts);
+  const bs = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.13, 0.19), matA);
+  bs.position.y = -0.87; g.add(bs);
+
+  // Tear notch
+  const nt = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.22), matDk);
+  nt.position.set(0.52, 0.82, 0); g.add(nt);
+
+  // Label band
+  const lb = new THREE.Mesh(new THREE.BoxGeometry(1.11, 0.19, 0.33), matLb);
+  lb.position.y = 0.1; g.add(lb);
+
+  // Studio text proxy
+  const tx = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.045, 0.005), matBg);
+  tx.position.set(0, 0.1, 0.165); g.add(tx);
+
+  return g;
+}
+
+/* ── SPRAY CAN ──────────────────────────────── */
+function createSprayCan() {
+  const g = new THREE.Group();
+
+  // Body
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 2.6, 32), matA.clone()));
+
+  // Bottom dome
+  const db = new THREE.Mesh(new THREE.SphereGeometry(0.44, 32, 16, 0, Math.PI*2, Math.PI/2, Math.PI/2), matA);
+  db.position.y = -1.3; g.add(db);
+
+  // Label band
+  const lb = new THREE.Mesh(new THREE.CylinderGeometry(0.445, 0.445, 1.1, 32), matLb);
+  lb.position.y = -0.2; g.add(lb);
+
+  // Logo bar on label
+  const logo = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.05, 0.005), matBg);
+  logo.position.set(0, -0.2, 0.446); g.add(logo);
+
+  // Shoulder
+  const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.44, 0.52, 32), matA);
+  sh.position.y = 1.56; g.add(sh);
+
+  // Neck
+  const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.26, 32), matDk);
+  nk.position.y = 1.95; g.add(nk);
+
+  // Actuator cap
+  const cp = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.28, 0.22, 32), matDk);
+  cp.position.y = 2.19; g.add(cp);
+
+  // Nozzle
+  const nz = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.18, 16), matDk);
+  nz.rotation.z = Math.PI / 2;
+  nz.position.set(0.36, 2.24, 0); g.add(nz);
+
+  // Nozzle tip
+  const nt = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), matA);
+  nt.position.set(0.45, 2.24, 0); g.add(nt);
+
+  return g;
+}
+
+/* ── PLACE OBJECTS ──────────────────────────── */
+const pouch0   = createFoilPouch(matA);
+const pouch1   = createFoilPouch(matB);
+const pouch2   = createFoilPouch(matC);
+const sprayCan = createSprayCan();
+
+pouch0.position.set(-3.5,  1.2, 1.0);
+pouch1.position.set( 2.8,  0.6, 0.5);
+pouch2.position.set( 0.3,  3.8,-0.8);
+sprayCan.position.set(-1.2, 3.2, 0.0);
+
+pouch0.rotation.set( 0.30,-0.40, 0.20);
+pouch1.rotation.set(-0.20, 0.50,-0.10);
+pouch2.rotation.set( 0.50, 0.20, 0.30);
+sprayCan.rotation.set(0.10, 0.40, 0.05);
+
+scene.add(pouch0, pouch1, pouch2, sprayCan);
+
+/* ── SCROLL STATE ───────────────────────────── */
+let scrollProgress = 0, prevScrollY = 0, scrollVel = 0, sprayRotY = 0;
+
+const heroZone  = document.getElementById('heroZone');
+const phHero    = document.getElementById('phHero');
+const phBold    = document.getElementById('phBold');
+const phCatalog = document.getElementById('phCatalog');
+const phMotion  = document.getElementById('phMotion');
+
+function ss(t, lo, hi) {
+  t = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
+  return t * t * (3 - 2 * t);
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function updateFromScroll(p) {
+  const pDisp  = ss(p, 0.18, 0.52);
+  const pCamFw = ss(p, 0.18, 0.55);
+  const pCent  = ss(p, 0.30, 0.65);
+
+  // Camera push
+  camera.position.z = lerp(12, 5.5, pCamFw);
+  camera.position.y = lerp( 0,-0.5, ss(p, 0.30, 0.70));
+
+  // Pouches disperse
+  pouch0.position.x = lerp(-3.5,-16, pDisp);
+  pouch0.position.y = lerp( 1.2,  3, pDisp);
+  pouch1.position.x = lerp( 2.8, 16, pDisp);
+  pouch1.position.y = lerp( 0.6,  2, pDisp);
+  pouch2.position.y = lerp( 3.8, 16, pDisp);
+  pouch2.position.x = lerp( 0.3, -2, pDisp);
+
+  // Spray can centers
+  sprayCan.position.x = lerp(-1.2, 0,    pCent);
+  sprayCan.position.y = lerp( 3.2,-0.3,  pCent);
+  sprayCan.position.z = lerp( 0.0, 0.8,  pCent);
+
+  // Spray can rotation with scroll velocity
+  sprayRotY += scrollVel * 0.018;
+  sprayRotY *= 0.88;
+  sprayCan.rotation.y = p * Math.PI * 2.5 + sprayRotY;
+
+  // Pouch tilt
+  pouch0.rotation.z =  0.20 + pDisp * 0.40;
+  pouch1.rotation.z = -0.10 - pDisp * 0.30;
+  pouch2.rotation.x =  0.50 + pDisp * 0.50;
+
+  // Phase overlays
+  phHero.style.opacity    = 1 - ss(p, 0.08, 0.20);
+  phBold.style.opacity    = ss(p, 0.30, 0.42) * (1 - ss(p, 0.70, 0.82));
+  phCatalog.style.opacity = ss(p, 0.62, 0.74) * (1 - ss(p, 0.84, 0.94));
+  phMotion.style.opacity  = ss(p, 0.82, 0.92);
+}
+
+window.addEventListener('scroll', () => {
+  const sy = window.scrollY;
+  scrollVel = sy - prevScrollY;
+  prevScrollY = sy;
+  const top  = heroZone.getBoundingClientRect().top;
+  const zone = heroZone.offsetHeight - window.innerHeight;
+  scrollProgress = Math.max(0, Math.min(1, -top / zone));
+  updateFromScroll(scrollProgress);
+}, { passive: true });
+
+/* ── RENDER LOOP ────────────────────────────── */
+let idleT = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  idleT += 0.008;
+
+  const idle = 1 - Math.min(1, scrollProgress * 8);
+
+  pouch0.position.y    += Math.sin(idleT * 1.10 + 0.0) * 0.004 * idle;
+  pouch1.position.y    += Math.sin(idleT * 0.90 + 2.1) * 0.004 * idle;
+  pouch2.position.y    += Math.sin(idleT * 1.30 + 4.3) * 0.004 * idle;
+  sprayCan.position.y  += Math.sin(idleT * 0.70 + 1.5) * 0.003 * idle;
+
+  pouch0.rotation.y    += 0.0030 * idle;
+  pouch1.rotation.y    -= 0.0020 * idle;
+  pouch2.rotation.y    += 0.0025 * idle;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ── RESIZE ─────────────────────────────────── */
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
 });
 
-// ════════════════════════════════════════════
-// THREE.JS — PHYSICS OBJECTS
-// ════════════════════════════════════════════
-(function() {
-    const canvas   = document.getElementById('physics-canvas');
-    const heroEl   = document.getElementById('hero');
-    let W = heroEl.offsetWidth, H = heroEl.offsetHeight;
+/* ── SCROLL REVEAL ──────────────────────────── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.setSize(W, H);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
-    renderer.toneMapping       = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(42, W / H, .1, 100);
-    camera.position.set(0, 1.5, 15);
-    camera.lookAt(0, 0, 0);
-
-    // ── Lighting ────────────────────────────
-    scene.add(new THREE.AmbientLight(0xffffff, .25));
-
-    const key = new THREE.DirectionalLight(0xfff0e8, 2.2);
-    key.position.set(4, 10, 6);
-    key.castShadow = true;
-    key.shadow.mapSize.width = key.shadow.mapSize.height = 2048;
-    key.shadow.camera.near  = .1; key.shadow.camera.far  = 40;
-    key.shadow.camera.left  = -10; key.shadow.camera.right = 10;
-    key.shadow.camera.top   = 10; key.shadow.camera.bottom = -10;
-    scene.add(key);
-
-    const fill = new THREE.DirectionalLight(0xd8e8ff, .7);
-    fill.position.set(-6, -2, 4);
-    scene.add(fill);
-
-    const rim = new THREE.DirectionalLight(0xffffff, 2.0);
-    rim.position.set(0, 4, -9);
-    scene.add(rim);
-
-    const top = new THREE.PointLight(0xffffff, 1.5, 22);
-    top.position.set(0, 9, 0);
-    scene.add(top);
-
-    const accent1 = new THREE.PointLight(0xeef0ff, .8, 16);
-    accent1.position.set(-4, 2, 3);
-    scene.add(accent1);
-
-    const accent2 = new THREE.PointLight(0xffeedd, .8, 16);
-    accent2.position.set( 4, 0, 3);
-    scene.add(accent2);
-
-    // ── Shadow floor ────────────────────────
-    const floorGeo = new THREE.PlaneGeometry(32, 32);
-    const floorMat = new THREE.ShadowMaterial({ opacity: .10 });
-    const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-    floorMesh.rotation.x = -Math.PI / 2;
-    floorMesh.position.y = -3.6;
-    floorMesh.receiveShadow = true;
-    scene.add(floorMesh);
-
-    // ── Material helpers ─────────────────────
-    function mm(hex, roughness, metalness) {
-        return new THREE.MeshStandardMaterial({ color: hex, roughness, metalness });
-    }
-    const MAT = {
-        silver:  mm(0xcfcbc3, .08, .97),
-        darkCap: mm(0x2e2c29, .12, .92),
-        brushed: mm(0xbab6ae, .28, .86),
-        light:   mm(0xe4e0d9, .10, .94),
-        gold:    mm(0xc8bfa8, .09, .96),
-        chrome:  mm(0xd8d4cd, .04, .99),
-        pewter:  mm(0x888480, .22, .88),
-    };
-
-    // ── Object factory functions ──────────────
-    function serumBottle() {
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, 1.1, 32), MAT.silver);
-        body.castShadow = true; g.add(body);
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(.2, 32, 16, 0, Math.PI*2, 0, Math.PI/2), MAT.silver);
-        dome.position.y = .55; dome.castShadow = true; g.add(dome);
-        const base = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, .08, 32), MAT.darkCap);
-        base.position.y = -.59; base.castShadow = true; g.add(base);
-        const nozzleBase = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .12, 16), MAT.darkCap);
-        nozzleBase.position.y = .66; g.add(nozzleBase);
-        const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .2, 12), MAT.darkCap);
-        nozzle.position.y = .82; g.add(nozzle);
-        return g;
-    }
-
-    function foilPouch() {
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(.84, 1.2, .16), MAT.brushed);
-        body.castShadow = true; g.add(body);
-        [.63, -.63].forEach(y => {
-            const seal = new THREE.Mesh(new THREE.BoxGeometry(.84, .06, .18), MAT.pewter);
-            seal.position.y = y; g.add(seal);
-        });
-        return g;
-    }
-
-    function metalTube() {
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(.165, .13, 1.3, 32), MAT.light);
-        body.castShadow = true; g.add(body);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.175, .165, .2, 32), MAT.darkCap);
-        cap.position.y = .75; cap.castShadow = true; g.add(cap);
-        const tip = new THREE.Mesh(new THREE.SphereGeometry(.175, 32, 16, 0, Math.PI*2, 0, Math.PI/2), MAT.darkCap);
-        tip.rotation.x = Math.PI; tip.position.y = .85; g.add(tip);
-        return g;
-    }
-
-    function compact() {
-        const g = new THREE.Group();
-        const base = new THREE.Mesh(new THREE.CylinderGeometry(.52, .52, .11, 48), MAT.brushed);
-        base.castShadow = true; g.add(base);
-        const lid = new THREE.Mesh(new THREE.CylinderGeometry(.53, .53, .09, 48), MAT.chrome);
-        lid.position.y = .10; lid.castShadow = true; g.add(lid);
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(.515, .013, 8, 48), MAT.pewter);
-        ring.rotation.x = Math.PI / 2; ring.position.y = .055; g.add(ring);
-        return g;
-    }
-
-    function fragranceBottle() {
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(.5, 1.0, .26), MAT.light);
-        body.castShadow = true; g.add(body);
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(.085, .11, .26, 24), MAT.light);
-        neck.position.y = .63; g.add(neck);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .085, .18, 24), MAT.darkCap);
-        cap.position.y = .86; cap.castShadow = true; g.add(cap);
-        return g;
-    }
-
-    function lipstickTube() {
-        const g = new THREE.Group();
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .9, 24), MAT.gold);
-        barrel.castShadow = true; g.add(barrel);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .4, 24), MAT.darkCap);
-        cap.position.y = .65; cap.castShadow = true; g.add(cap);
-        const capTop = new THREE.Mesh(new THREE.SphereGeometry(.12, 24, 12, 0, Math.PI*2, 0, Math.PI/2), MAT.darkCap);
-        capTop.rotation.x = Math.PI; capTop.position.y = .85; g.add(capTop);
-        return g;
-    }
-
-    // ── Physics class ─────────────────────────
-    class PhysObj {
-        constructor(mesh, radius) {
-            this.mesh    = mesh;
-            this.radius  = radius || .52;
-            this.vel     = new THREE.Vector3((Math.random()-.5)*2.5, -(1+Math.random()*2), (Math.random()-.5)*.6);
-            this.angVel  = new THREE.Vector3((Math.random()-.5)*7, (Math.random()-.5)*7, (Math.random()-.5)*7);
-            this.restitution = .32;
-            this.airDrag = .9985;
-            this.floorY  = -3.6 + this.radius;
-            this.settled = 0;
-        }
-        update(dt, mpt) {
-            if (this.settled > 180) return;
-            this.vel.y -= 9.6 * dt;
-
-            // mouse repulsion
-            if (mpt) {
-                const d = mpt.clone().sub(this.mesh.position);
-                const dist = d.length();
-                if (dist < 2.8 && dist > .05) {
-                    const f = (.4 / (dist * dist)) * dt;
-                    this.vel.addScaledVector(d.normalize(), -f * 14);
-                    this.settled = 0;
-                }
-            }
-
-            this.vel.multiplyScalar(this.airDrag);
-            this.angVel.multiplyScalar(.997);
-            this.mesh.position.addScaledVector(this.vel, dt);
-            this.mesh.rotation.x += this.angVel.x * dt;
-            this.mesh.rotation.y += this.angVel.y * dt;
-            this.mesh.rotation.z += this.angVel.z * dt;
-
-            // floor
-            if (this.mesh.position.y < this.floorY) {
-                this.mesh.position.y = this.floorY;
-                if (Math.abs(this.vel.y) > .08) {
-                    this.vel.y  *= -this.restitution;
-                    this.vel.x  *= .88;
-                    this.vel.z  *= .88;
-                    this.angVel.multiplyScalar(.72);
-                } else {
-                    this.vel.y   = 0;
-                    this.vel.x  *= .93;
-                    this.vel.z  *= .93;
-                    this.angVel.multiplyScalar(.88);
-                    if (this.vel.lengthSq() < 2e-4 && this.angVel.lengthSq() < 4e-3) this.settled++;
-                }
-            }
-
-            // wall x
-            if (Math.abs(this.mesh.position.x) > 6.2) {
-                this.mesh.position.x = Math.sign(this.mesh.position.x) * 6.2;
-                this.vel.x *= -.45;
-            }
-            // wall z
-            if (this.mesh.position.z > 2.2)  { this.mesh.position.z =  2.2; this.vel.z *= -.4; }
-            if (this.mesh.position.z < -4.5)  { this.mesh.position.z = -4.5; this.vel.z *= -.4; }
-        }
-    }
-
-    function collide(a, b) {
-        const dx = b.mesh.position.x - a.mesh.position.x;
-        const dy = b.mesh.position.y - a.mesh.position.y;
-        const dz = b.mesh.position.z - a.mesh.position.z;
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        const min  = a.radius + b.radius;
-        if (dist >= min || dist < .001) return;
-        const ov = (min - dist) / 2;
-        const nx = dx/dist, ny = dy/dist, nz = dz/dist;
-        a.mesh.position.x -= nx*ov; a.mesh.position.y -= ny*ov; a.mesh.position.z -= nz*ov;
-        b.mesh.position.x += nx*ov; b.mesh.position.y += ny*ov; b.mesh.position.z += nz*ov;
-        const rvx = b.vel.x - a.vel.x, rvy = b.vel.y - a.vel.y, rvz = b.vel.z - a.vel.z;
-        const vn  = rvx*nx + rvy*ny + rvz*nz;
-        if (vn > 0) return;
-        const j = -(1 + Math.min(a.restitution, b.restitution)) * vn * .5;
-        a.vel.x -= j*nx; a.vel.y -= j*ny; a.vel.z -= j*nz;
-        b.vel.x += j*nx; b.vel.y += j*ny; b.vel.z += j*nz;
-        const spin = .9;
-        a.angVel.addScaledVector(new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)), spin);
-        b.angVel.addScaledVector(new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)), spin);
-        a.settled = b.settled = 0;
-    }
-
-    // ── Spawn objects ─────────────────────────
-    const defs = [
-        { fn: serumBottle,    r: .52, x: -3.2 },
-        { fn: foilPouch,      r: .60, x: -1.3 },
-        { fn: metalTube,      r: .52, x:  .6  },
-        { fn: compact,        r: .54, x:  2.3 },
-        { fn: fragranceBottle,r: .51, x:  3.8 },
-        { fn: lipstickTube,   r: .40, x: -2.1 },
-    ];
-
-    const physObjs = defs.map((d, i) => {
-        const mesh = d.fn();
-        mesh.position.set(
-            d.x + (Math.random()-.5) * 1.2,
-            10 + i * 2.2,
-            (Math.random()-.5) * 1.4
-        );
-        mesh.rotation.set(Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*Math.PI*2);
-        scene.add(mesh);
-        return new PhysObj(mesh, d.r);
-    });
-
-    // ── Mouse plane tracking ──────────────────
-    const raycaster  = new THREE.Raycaster();
-    const mouseNDC   = new THREE.Vector2();
-    const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.5);
-    let mouseTarget  = null;
-
-    document.addEventListener('mousemove', e => {
-        if (window.scrollY > H * 1.1) { mouseTarget = null; return; }
-        mouseNDC.x =  (e.clientX / W) * 2 - 1;
-        mouseNDC.y = -(e.clientY / H) * 2 + 1;
-        raycaster.setFromCamera(mouseNDC, camera);
-        const pt = new THREE.Vector3();
-        if (raycaster.ray.intersectPlane(mousePlane, pt)) mouseTarget = pt;
-    });
-
-    // ── Animate ───────────────────────────────
-    let last = performance.now();
-
-    (function tick() {
-        requestAnimationFrame(tick);
-        const now  = performance.now();
-        const dt   = Math.min((now - last) / 1000, .033);
-        last = now;
-
-        if (window.scrollY < H) {
-            const mt = (window.scrollY < H * .9) ? mouseTarget : null;
-            physObjs.forEach(o => o.update(dt, mt));
-            for (let i = 0; i < physObjs.length; i++)
-                for (let j = i+1; j < physObjs.length; j++)
-                    collide(physObjs[i], physObjs[j]);
-        }
-
-        renderer.render(scene, camera);
-    })();
-
-    // ── Resize ────────────────────────────────
-    window.addEventListener('resize', () => {
-        W = heroEl.offsetWidth; H = heroEl.offsetHeight;
-        camera.aspect = W / H;
-        camera.updateProjectionMatrix();
-        renderer.setSize(W, H);
-    });
-
-})();
-
-// ════════════════════════════════════════════
-// SCROLL FADE-IN
-// ════════════════════════════════════════════
-const obs = new IntersectionObserver(entries => {
-    entries.forEach((e, idx) => {
-        if (e.isIntersecting) {
-            setTimeout(() => e.target.classList.add('vis'), idx * 70);
-            obs.unobserve(e.target);
-        }
-    });
-}, { threshold: .12 });
-
-document.querySelectorAll('.fu').forEach(el => obs.observe(el));
-
-// ════════════════════════════════════════════
-// HEADLINE PARALLAX
-// ════════════════════════════════════════════
-const heroHl = document.getElementById('heroHl');
-document.addEventListener('mousemove', e => {
-    if (window.scrollY > window.innerHeight) return;
-    const x = (e.clientX / window.innerWidth  - .5) * 14;
-    const y = (e.clientY / window.innerHeight - .5) *  8;
-    heroHl.style.transform = `translate(${x*.4}px,${y*.4}px)`;
-});
+document.querySelectorAll('.break-section,.apres-section,.services-section,.video-section,footer')
+  .forEach(el => io.observe(el));
 </script>
 </body>
 </html>
