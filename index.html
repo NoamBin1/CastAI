@@ -735,122 +735,137 @@ const mDark = metal(0x1c1b19, 0.16, 0.85, 1.2);
 const mBand = metal(0x0d0d0c, 0.30, 0.45, 0.8);
 const mBg   = new THREE.MeshStandardMaterial({ color:0xf0eeea, roughness:0.9, metalness:0 });
 
-/* ─── FOIL POUCH ─────────────────────────── */
-// W:H:D = 1.0 : 1.7 : 0.18  — very flat, clearly a bag silhouette
-function makePouch(mat) {
+/* ─── CHIP BAG ───────────────────────────── */
+// Puffy inflated bag: wide, deep body with flat crimped seals top+bottom
+function makeChipBag(mat) {
   const g = new THREE.Group();
-  const W = 1.30, H = 2.10, D = 0.22;
+  const W = 1.55, H = 1.85, D = 0.70;
 
-  // main body — flat with strong pillow bulge in the centre
-  const bGeo = new THREE.BoxGeometry(W, H, D, 8, 16, 4);
+  // inflated body — heavily subdivided so deformation looks smooth
+  const bGeo = new THREE.BoxGeometry(W, H, D, 12, 18, 8);
   const bPos = bGeo.attributes.position;
   for (let i = 0; i < bPos.count; i++) {
-    const nx = Math.abs(bPos.getX(i)) / (W*0.5);
-    const ny = Math.abs(bPos.getY(i)) / (H*0.5);
-    const bz  = bPos.getZ(i);
-    // bulge peaks at centre, fades to zero at edges
-    const bulge = (1 - nx*nx) * (1 - ny*ny) * 0.26;
-    bPos.setZ(i, bz + (bz > 0 ? bulge : -bulge));
+    const nx = bPos.getX(i) / (W * 0.5); // -1..1
+    const ny = bPos.getY(i) / (H * 0.5);
+    const nz = bPos.getZ(i) / (D * 0.5);
+    // pillow: inflate all faces away from centre, taper to zero at edges
+    const inflate = (1 - nx*nx) * (1 - ny*ny) * 0.38;
+    bPos.setX(i, bPos.getX(i) + Math.sign(nx) * (1-ny*ny) * 0.06);
+    bPos.setZ(i, bPos.getZ(i) + Math.sign(nz) * inflate);
+    // slight vertical bow — bags are fatter in the middle height-wise
+    bPos.setX(i, bPos.getX(i) * (1 + (1-ny*ny)*0.04));
   }
   bPos.needsUpdate = true; bGeo.computeVertexNormals();
   g.add(new THREE.Mesh(bGeo, mat));
 
-  // top heat seal — wider than body, very thin
-  const tSeal = new THREE.Mesh(new THREE.BoxGeometry(W+0.04, 0.15, D*0.7), mSilA);
-  tSeal.position.y = H*0.5 + 0.075; g.add(tSeal);
+  // top crimp seal — flat, slightly narrower than body, clearly horizontal
+  const tSeal = new THREE.Mesh(new THREE.BoxGeometry(W*0.88, 0.18, D*0.28), mat);
+  tSeal.position.y = H*0.5 + 0.09; g.add(tSeal);
 
-  // bottom seal
-  const bSeal = new THREE.Mesh(new THREE.BoxGeometry(W+0.04, 0.15, D*0.7), mSilA);
-  bSeal.position.y = -(H*0.5 + 0.075); g.add(bSeal);
+  // crimp ridges on top seal (alternating thin stripes = heat seal texture)
+  for (let i = -3; i <= 3; i++) {
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(W*0.85, 0.022, D*0.30), mDark);
+    ridge.position.set(0, H*0.5 + 0.09 + i*0.025, 0); g.add(ridge);
+  }
 
-  // tear notch (small cut on top-right of top seal)
-  const notch = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.20, D*0.8), mDark);
-  notch.position.set(W*0.48, H*0.5+0.075, 0); g.add(notch);
+  // bottom crimp seal
+  const bSeal = new THREE.Mesh(new THREE.BoxGeometry(W*0.88, 0.18, D*0.28), mat);
+  bSeal.position.y = -(H*0.5 + 0.09); g.add(bSeal);
 
-  // side seams (thin vertical strips, left and right edges)
-  [-W*0.5, W*0.5].forEach(x => {
-    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.055, H*0.92, D*0.5), mDark);
-    seam.position.set(x, 0, 0); g.add(seam);
+  // gusset fold lines on sides (vertical crease at ±X edge)
+  [-W*0.5+0.04, W*0.5-0.04].forEach(x => {
+    const crease = new THREE.Mesh(new THREE.BoxGeometry(0.04, H*0.86, D*0.18), mDark);
+    crease.position.set(x, 0, 0); g.add(crease);
   });
 
-  // label / branding band
-  const band = new THREE.Mesh(new THREE.BoxGeometry(W-0.08, H*0.24, D+0.01), mBand);
-  band.position.y = H*0.08; g.add(band);
+  // label block (centre of bag)
+  const lbl = new THREE.Mesh(new THREE.BoxGeometry(W*0.76, H*0.46, D*0.02), mBand);
+  lbl.position.set(0, H*0.04, D*0.5+0.01); g.add(lbl);
 
-  // wordmark bar on label
-  const wm = new THREE.Mesh(new THREE.BoxGeometry(W*0.48, 0.055, 0.008), mBg);
-  wm.position.set(0, H*0.08, (D+0.01)*0.5+0.001); g.add(wm);
+  // brand name bar on label
+  const bar1 = new THREE.Mesh(new THREE.BoxGeometry(W*0.46, 0.065, 0.008), mBg);
+  bar1.position.set(0, H*0.10, D*0.5+0.022); g.add(bar1);
+  const bar2 = new THREE.Mesh(new THREE.BoxGeometry(W*0.30, 0.040, 0.008), mBg);
+  bar2.position.set(0, H*0.01, D*0.5+0.022); g.add(bar2);
 
   return g;
 }
 
-/* ─── SPRAY CAN ──────────────────────────── */
-function makeSprayCan() {
+/* ─── SODA CAN ───────────────────────────── */
+// Classic 330ml proportions: R=0.52, body H=2.0, total ~2.8
+function makeSodaCan() {
   const g = new THREE.Group();
-  // radius 0.50, total height ~3.8 → clearly can-shaped
-  const R = 0.50, BH = 2.80;
+  const R = 0.52, BH = 2.05;
 
-  // main body cylinder
+  // main body — straight cylinder
   g.add(new THREE.Mesh(new THREE.CylinderGeometry(R, R, BH, 48), mSilA));
 
-  // bottom rounded cap
-  const bot = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 24, 0, Math.PI*2, Math.PI/2, Math.PI/2), mSilA);
-  bot.position.y = -BH/2; g.add(bot);
+  // concave bottom dome (pushed inward — soda cans dome inward)
+  const botDome = new THREE.Mesh(new THREE.SphereGeometry(R*0.85, 40, 20), mSilA);
+  botDome.position.y = -BH/2 + R*0.14; g.add(botDome);
+  // bottom rim ring
+  const botRim = new THREE.Mesh(new THREE.CylinderGeometry(R, R*0.88, 0.10, 48), mSilB);
+  botRim.position.y = -BH/2 - 0.03; g.add(botRim);
 
-  // label band (dark, ~40% of body height)
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(R+0.002, R+0.002, BH*0.44, 48), mBand);
-  band.position.y = -BH*0.06; g.add(band);
+  // label wrap (dark band, most of body)
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(R+0.003, R+0.003, BH*0.80, 48), mBand);
+  band.position.y = BH*0.02; g.add(band);
 
-  // wordmark lines on band
-  [[0.60, 0.058],[0.36, 0.038]].forEach(([w,h], i) => {
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.006), mBg);
-    bar.position.set(0, -BH*0.06 + (i===0?0.08:-0.07), R+0.003); g.add(bar);
+  // brand bars on label
+  [[0.62, 0.068, 0.14],[0.38, 0.042, 0.04],[0.50, 0.030, -0.04]].forEach(([w,h,dy]) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.007), mBg);
+    b.position.set(0, dy, R+0.004); g.add(b);
   });
 
-  // shoulder taper
-  const sho = new THREE.Mesh(new THREE.CylinderGeometry(0.30, R, 0.58, 48), mSilA);
-  sho.position.y = BH/2 + 0.29; g.add(sho);
+  // shoulder — gentle taper inward
+  const sho = new THREE.Mesh(new THREE.CylinderGeometry(R*0.72, R, 0.36, 48), mSilA);
+  sho.position.y = BH/2 + 0.18; g.add(sho);
 
-  // neck
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.30, 0.28, 48), mDark);
-  neck.position.y = BH/2 + 0.72; g.add(neck);
+  // neck — narrow cylinder
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(R*0.62, R*0.72, 0.24, 48), mSilA);
+  neck.position.y = BH/2 + 0.48; g.add(neck);
 
-  // actuator cap (slightly wider than neck)
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.28, 0.26, 48), mDark);
-  cap.position.y = BH/2 + 0.99; g.add(cap);
+  // top rim flange
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(R*0.72, R*0.62, 0.10, 48), mSilB);
+  rim.position.y = BH/2 + 0.65; g.add(rim);
 
-  // actuator press button
-  const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.07, 32), mSilB);
-  btn.position.y = BH/2 + 1.145; g.add(btn);
+  // top lid disc
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(R*0.68, R*0.68, 0.04, 48), mSilA);
+  lid.position.y = BH/2 + 0.72; g.add(lid);
 
-  // nozzle tube
-  const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.22, 16), mDark);
-  noz.rotation.z = Math.PI/2; noz.position.set(0.40, BH/2+1.10, 0); g.add(noz);
+  // pull tab base (small rectangle on lid)
+  const tabBase = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.18), mSilB);
+  tabBase.position.set(-0.12, BH/2+0.75, 0.06); g.add(tabBase);
 
-  // nozzle tip sphere
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.068, 16, 12), mSilC);
-  tip.position.set(0.52, BH/2+1.10, 0); g.add(tip);
+  // pull tab ring (oval loop)
+  const tabRing = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.025, 8, 20), mSilB);
+  tabRing.rotation.x = Math.PI/2;
+  tabRing.position.set(-0.14, BH/2+0.80, 0.06); g.add(tabRing);
+
+  // opening score circle on lid
+  const score = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.008, 32), mDark);
+  score.position.set(0.08, BH/2+0.745, 0); g.add(score);
 
   return g;
 }
 
 /* ─── PLACE OBJECTS ─────────────────────── */
-const pouch0   = makePouch(mSilA);
-const pouch1   = makePouch(mSilB);
-const pouch2   = makePouch(mSilC);
-const sprayCan = makeSprayCan();
+const pouch0  = makeChipBag(mSilA);
+const pouch1  = makeChipBag(mSilB);
+const pouch2  = makeChipBag(mSilC);
+const sprayCan = makeSodaCan();
 
-pouch0.position.set(-3.8, 0.6, 0.6);
+pouch0.position.set(-3.8, 0.5, 0.5);
 pouch1.position.set( 3.0, 0.2, 0.3);
-pouch2.position.set( 0.4, 4.2,-0.5);
-sprayCan.position.set(-0.8, 3.6, 0.3);
+pouch2.position.set( 0.4, 4.0,-0.5);
+sprayCan.position.set(-0.7, 3.4, 0.3);
 
-// pouches: slight tilt so they're not perfectly flat-on
-pouch0.rotation.set( 0.18,-0.30, 0.14);
-pouch1.rotation.set(-0.12, 0.38,-0.10);
-pouch2.rotation.set( 0.32, 0.20, 0.22);
-// can upright with slight lean — silhouette reads immediately
-sprayCan.rotation.set(0.06, 0.28, 0.05);
+// bags: slight tilt so puffiness reads in 3D
+pouch0.rotation.set( 0.16,-0.28, 0.12);
+pouch1.rotation.set(-0.10, 0.34,-0.08);
+pouch2.rotation.set( 0.28, 0.18, 0.20);
+// can: nearly upright so silhouette reads on load
+sprayCan.rotation.set(0.05, 0.22, 0.04);
 
 scene.add(pouch0, pouch1, pouch2, sprayCan);
 
